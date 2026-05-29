@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Project context (Claude / Cursor)
+    url: https://github.com/LenySauzet/Ankhora/blob/main/CLAUDE.md
+    about: Read CLAUDE.md before opening an issue — it lays out scope, constraints, and conventions.
+  - name: Research dossier (May 2026)
+    url: https://github.com/LenySauzet/Ankhora/blob/main/research/xr-platform-master-research.md
+    about: The fact-checked master research dossier — defer to it on XR / Unity / Quest 3 / tooling questions.

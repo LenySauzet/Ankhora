@@ -1,0 +1,57 @@
+# Unity generated / heavy caches (align with .gitignore where useful for indexing)
+Library/
+Temp/
+Logs/
+obj/
+Build/
+Builds/
+MemoryCaptures/
+Recordings/
+UserSettings/
+ProjectSettings/Packages/
+.Editor/
+.utmp/
+.gradle/
+upm-ci~/
+
+# IDE / tooling
+.vs/
+.vscode/
+.vsconfig
+.idea/
+
+# Solution & build outputs
+*.csproj
+*.unityproj
+*.sln
+*.slnx
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.apk
+*.aab
+*.unitypackage
+*.app
+*.exe
+*.log
+
+# XR / validation
+ValidationSuiteResults/
+
+# Addressables & large/local content
+ServerData/
+Assets/StreamingAssets/aa/
+Assets/AddressableAssetsData/
+Assets/AssetPacks/
+Assets/BuildReports/
+Assets/Unity.VisualScripting.Generated/
+
+# OS
+.DS_Store
+**/.DS_Store
+
+crashlytics-build.properties
+mono_crash.*

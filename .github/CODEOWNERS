@@ -1,0 +1,16 @@
+# CODEOWNERS — default reviewers for the Ankhora repo.
+# GitHub picks these as suggested reviewers and (with branch protection) requires
+# their approval to merge changes to protected paths.
+#
+# Sync the @teammate handles below with the actual GitHub usernames before pushing.
+
+# Catch-all: any one of the team can review anything.
+*                                @LenySauzet
+
+# Project context, ADRs, CI: Lény owns these by default (architecture caretaker).
+/CLAUDE.md                       @LenySauzet
+/AGENTS.md                       @LenySauzet
+/docs/02-architecture/           @LenySauzet
+/.github/                        @LenySauzet
+/.cursor/                        @LenySauzet
+/research/                       @LenySauzet

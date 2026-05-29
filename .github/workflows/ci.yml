@@ -1,0 +1,68 @@
+name: CI — Unity build verify
+
+# Runs on every PR targeting main and on every push to main.
+# Build target = Android (Quest 3 standalone). Runners = ubuntu-latest (GameCI Linux container handles the Android build chain).
+#
+# Required GitHub secrets:
+#   UNITY_LICENSE   — content of Unity_lic.ulf obtained via the manual activation flow (Personal licence is fine for student use)
+#   UNITY_EMAIL     — Unity account email
+#   UNITY_PASSWORD  — Unity account password
+#
+# See SETUP-NEXT-STEPS.md for how to obtain UNITY_LICENSE.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UNITY_VERSION: 2022.3.62f3
+
+jobs:
+  build-android:
+    name: Build Quest APK (Android, IL2CPP, ARM64)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+          fetch-depth: 0
+
+      - name: Cache Library/
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-${{ runner.os }}-${{ env.UNITY_VERSION }}-${{ hashFiles('Packages/manifest.json', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-${{ runner.os }}-${{ env.UNITY_VERSION }}-
+            Library-${{ runner.os }}-
+
+      - name: Build for Android (Quest 3)
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          unityVersion: ${{ env.UNITY_VERSION }}
+          targetPlatform: Android
+          androidTargetSdkVersion: AndroidApiLevel33
+          androidExportType: androidPackage
+          allowDirtyBuild: false
+          buildName: Ankhora
+
+      - name: Upload APK artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ankhora-Android-${{ github.sha }}
+          path: build/Android
+          if-no-files-found: warn
+          retention-days: 7

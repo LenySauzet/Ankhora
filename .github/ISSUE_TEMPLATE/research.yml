@@ -1,0 +1,31 @@
+name: Research / spike
+description: A time-boxed investigation that must conclude with a decision or a recommendation.
+title: "research(<scope>): <short question>"
+labels: ["research"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What are we trying to learn? Frame it as a single, falsifiable question.
+    validations:
+      required: true
+  - type: input
+    id: timebox
+    attributes:
+      label: Time box
+      description: How long do we give this before we cut our losses or commit?
+      placeholder: e.g. half a working day
+    validations:
+      required: true
+  - type: textarea
+    id: deliverable
+    attributes:
+      label: Deliverable
+      description: What artefact ends this research? Usually a doc under `docs/08-research/` and a follow-up issue.
+      placeholder: |
+        - File: docs/08-research/<slug>.md
+        - Decision: <what we commit to>
+        - Follow-up issue(s): #
+    validations:
+      required: true

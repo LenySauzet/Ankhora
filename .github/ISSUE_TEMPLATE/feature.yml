@@ -1,0 +1,56 @@
+name: Feature
+description: Propose a new user-facing or system-facing capability for Ankhora.
+title: "feat(<scope>): <short summary>"
+labels: ["feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for net-new behaviour. For a bugfix, use the **Bug** template.
+
+        Before submitting, confirm the feature is **in MVP scope** (see `docs/01-product/mvp-scope.md` and `CLAUDE.md > Out of scope`). Out-of-scope features should be tagged `v2` and parked.
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      description: Which subsystem does this feature belong to?
+      options:
+        - recorder
+        - playback
+        - xr
+        - ui
+        - domain
+        - infra
+        - ci
+        - docs
+        - tooling
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: What user problem does this solve? Tie back to a persona (expert / learner / admin).
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What
+      description: User-facing behaviour. Acceptance criteria as a checklist if you can.
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Implementation notes
+      description: Architecture sketch, Meta SDK APIs involved, files / scenes likely touched.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submit checks
+      options:
+        - label: I confirmed this is in MVP scope (or I am explicitly tagging it `v2`).
+          required: true
+        - label: I checked existing issues to avoid duplicates.
+          required: true

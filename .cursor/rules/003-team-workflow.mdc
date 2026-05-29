@@ -1,0 +1,99 @@
+---
+description: Team workflow — branches, commits, PRs, dual-repo mirror to Epitech
+alwaysApply: true
+---
+
+# Team workflow
+
+3-person Epitech project, Mac + Windows split, 2 months / Thu+Fri only. The workflow is optimised for minimal friction and zero "it works on my machine".
+
+## Repositories
+
+- **Working repo**: `LenySauzet/Ankhora` (public). All PRs land here.
+- **Epitech submission repo**: `EpitechMscProPromo2026/T-VIR-902-MPL_2`. Mirror only — never push by hand. CI pushes `main` automatically after each merge.
+
+## Branches
+
+- `main` — protected. No direct push. Always shippable.
+- Feature branches: `feat/<scope>-<slug>` (e.g. `feat/recorder-hand-capture`).
+- Bugfix branches: `fix/<slug>` (e.g. `fix/passthrough-flicker`).
+- Chore / infra: `chore/<slug>`.
+- Docs only: `docs/<slug>`.
+
+Keep branches short-lived (≤ 2 working days). Rebase often onto `main` before opening a PR.
+
+## Commits — Conventional Commits
+
+Every commit must follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>(<scope>)?: <short imperative summary>
+
+<optional body>
+
+<optional footer>
+```
+
+Allowed types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`, `build`, `ci`, `style`.
+
+Scopes for Ankhora: `recorder`, `playback`, `xr`, `ui`, `domain`, `infra`, `ci`, `docs`, `tooling`.
+
+Example: `feat(recorder): persist hand joints to JSON timeline`.
+
+If you use Claude Code, invoke the `git-commit` skill (`/git-commit`) — it generates a conformant message from staged changes.
+
+## Pull Requests
+
+- **One PR per logical change.** No grab-bag PRs.
+- Title = a Conventional Commit (since we squash-merge, the PR title becomes the commit message on `main`).
+- Description follows `.github/pull_request_template.md`.
+- **Required checks before merge**:
+  1. GameCI Unity build verify (Quest target) — green.
+  2. Claude Code review (`anthropics/claude-code-action`) — addressed.
+  3. CodeRabbit review — addressed.
+  4. At least one human approval.
+- Merge strategy: **squash and merge**. Keeps `main` linear and Conventional-Commits-clean.
+- After merge, the mirror workflow auto-pushes `main` to the Epitech repo. Watch the run; if it fails, fix it before walking away.
+
+## Issues & tickets
+
+Tickets live in **GitHub Projects** ("Ankhora" board) attached to `LenySauzet/Ankhora`. Use the issue templates under `.github/ISSUE_TEMPLATE/`. Link issues to PRs via `Closes #NN` in the PR body.
+
+## Code review
+
+- Be specific: cite file:line, propose alternatives, avoid stylistic-only nits already covered by lint or this rule.
+- Reply "addressed" with a follow-up commit hash when you act on a comment. Don't resolve a comment unless the requester does or the asker is offline.
+- Block on architectural disagreements — open an ADR if you can't reach quick consensus.
+
+## ADRs — when to write one
+
+Write an ADR under `docs/02-architecture/adr/NNNN-<slug>.md` when you:
+
+- pick a library / SDK over an alternative;
+- change Unity Editor version, render pipeline, scripting backend, or target architecture;
+- change the data model of a masterclass recording;
+- introduce a runtime dependency that touches the build pipeline.
+
+ADR template (use the `mdc` snippet helper):
+
+```markdown
+# NNNN — <decision title>
+
+- Status: proposed | accepted | superseded by NNNN
+- Date: YYYY-MM-DD
+- Deciders: <names>
+
+## Context
+…
+
+## Decision
+…
+
+## Consequences
+- Positive: …
+- Negative: …
+- Neutral: …
+
+## Alternatives considered
+…
+```

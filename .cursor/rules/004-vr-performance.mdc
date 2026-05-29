@@ -1,0 +1,82 @@
+---
+description: Quest 3 VR performance budgets and guardrails
+alwaysApply: true
+---
+
+# VR performance — Quest 3
+
+Quest 3 has a Snapdragon XR2 Gen 2 mobile SoC. **It is not a desktop GPU.** Treat every frame as a budget. Performance regressions are far more visible in VR than in 2D — sub-90 FPS or frame-time spikes cause user-perceived nausea.
+
+## Targets
+
+- **Refresh rate**: 90 Hz default (11.1 ms / frame). MVP target is 90 Hz, not 72.
+- **CPU budget**: ~7 ms per frame.
+- **GPU budget**: ~7 ms per frame.
+- **Draw calls**: < 200 / eye (Quest 3 is generous compared to Quest 2 but stay below this).
+- **Triangles**: < 750 k visible per frame (rough order of magnitude).
+- **Texture memory**: < 1.5 GB resident.
+
+Measure with **OVR Metrics Tool** on device — not Unity Profiler over Link (Mac can't anyway).
+
+## Renderer
+
+- URP only. No Built-in. No HDRP (HDRP is not viable on Quest 3 mobile GPU).
+- Vulkan only. No OpenGLES.
+- **Single Pass Instanced** or **Multiview** rendering — never Multi-pass.
+- Use the **Universal Render Pipeline / Mobile / Lit** shader or the URP / Simple Lit family. Avoid HDRP shaders, Standard, or shaders with full PBR + complex BRDF.
+
+## Lighting
+
+- **Bake static lights.** No realtime shadows except one directional shadow casting only on dynamic objects.
+- Reflection probes baked. No realtime reflection probes.
+- LightProbeGroup for dynamic objects in baked scenes.
+
+## Geometry
+
+- LODs on anything > 5 k tris.
+- GPU instancing on repeated props.
+- Static batching on truly static meshes.
+- Dynamic batching off for VR (rarely a win, costs CPU).
+
+## Post-processing — minimal
+
+Disable by default:
+
+- ❌ Screen Space Ambient Occlusion (SSAO)
+- ❌ Bloom (or use the cheap variant only)
+- ❌ Depth of Field
+- ❌ Motion Blur
+- ❌ Vignette
+- ❌ Chromatic Aberration
+
+Color grading via LUT is OK. Tonemapping ACES is OK.
+
+## Anti-aliasing
+
+- Use **MSAA 4x** at the RenderPipelineAsset level (Quest 3 supports it well, much cheaper than post-AA).
+- No FXAA, no SMAA, no TAA (TAA + foveated rendering = visible artefacts).
+
+## Foveated rendering
+
+Enable **Eye-tracked Foveated Rendering** on Quest 3 (works without eye tracking too — falls back to fixed). Configure via `OVRManager` → Foveated Rendering Level: High during gameplay. Big GPU win essentially free of quality cost.
+
+## Scripting
+
+- Avoid `GameObject.Find`, `FindObjectOfType` at runtime — cache in Awake/Start.
+- Avoid LINQ in hot paths (Update, FixedUpdate, OnRenderObject). LINQ allocates IEnumerators.
+- No `string` concatenation in hot paths — use `StringBuilder` or pre-formatted strings.
+- No `Camera.main` in Update — cache it.
+- Allocations during recording / playback hot loops must be zero. Pre-allocate buffers for joint arrays.
+- Use Job System + Burst for hand joint serialization timeline processing if it ever gets heavy.
+
+## Audio
+
+- Compress AudioClip to Vorbis quality 70-100, Load Type: Compressed In Memory for VO, Streaming for long clips.
+- Mono for any spatialized source (mandatory for HRTF).
+- Limit concurrent spatialized sources to ≤ 32 — Meta Spatializer cost is non-trivial.
+
+## Build size
+
+- Strip unused Meta SDK features via Project Setup Tool.
+- Compress textures to ASTC 6x6 for diffuse, ASTC 4x4 for normal maps. Don't ship uncompressed.
+- Code stripping: `Managed Stripping Level = Low` for MVP, `Medium` later (test thoroughly — strips reflection callbacks).

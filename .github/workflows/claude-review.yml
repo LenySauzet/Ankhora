@@ -1,0 +1,73 @@
+name: Claude Code review
+
+# Runs Anthropic's claude-code-action on every PR.
+# The action reads CLAUDE.md, ADRs under docs/, and the research dossier as context,
+# then posts a project-aware review focused on Ankhora's Unity/XR conventions.
+#
+# Required GitHub secret:
+#   CLAUDE_CODE_OAUTH_TOKEN — generated via `claude setup-token` (uses your Claude Pro/Max seat, no extra cost)
+#
+# Triggers:
+#   - pull_request (opened, synchronize, reopened)
+#   - issue_comment on a PR that contains "@claude" (lets reviewers ask Claude follow-up questions)
+#
+# The action handles user input sanitization internally — we do not interpolate PR title,
+# body, or comment text into raw shell commands. We only pass them to the action via inputs.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+
+concurrency:
+  group: claude-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: Project-aware review
+    # Run on every PR event, OR only on @claude mentions for comment events.
+    if: |
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude') && github.event.issue.pull_request) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Claude Code action
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Project-specific instructions appended to Claude's system prompt.
+          # CLAUDE.md and rules under .cursor/rules/ are picked up automatically by Claude Code.
+          prompt: |
+            You are reviewing a PR on the Ankhora repository.
+
+            Always read these BEFORE commenting:
+            - CLAUDE.md (project context, conventions, MVP scope)
+            - .cursor/rules/*.mdc (Unity, Meta XR SDK, team workflow, VR performance rules)
+            - docs/02-architecture/adr/ if any ADR was added or referenced
+            - research/xr-platform-master-research.md if the PR touches XR / Quest 3 / Meta SDK choices
+
+            Focus on:
+            - Adherence to the Cursor rules (especially Building Blocks first, Interaction SDK for hand tracking, performance budgets).
+            - Whether the change matches MVP scope or has slipped into V2 territory.
+            - Conventional Commits compliance on the PR title.
+            - Correctness, security, performance — in that order.
+            - Concrete suggestions with file:line. No vague nits already covered by lint.
+
+            Skip cosmetic comments. Be terse and specific.

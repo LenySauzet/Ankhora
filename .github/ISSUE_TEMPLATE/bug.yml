@@ -1,0 +1,54 @@
+name: Bug
+description: Something is broken or behaves incorrectly.
+title: "fix(<scope>): <short summary>"
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - blocker (cannot ship)
+        - major (workaround exists, but worth fixing soon)
+        - minor (polish)
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps. Include Unity version, machine OS, headset firmware.
+      value: |
+        1.
+        2.
+        3.
+
+        Unity: 2022.3.62f3
+        OS:
+        Quest firmware:
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / video
+      description: Paste `adb logcat -s Unity:V` excerpt or attach a short MQDH capture. Strip secrets first.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submit checks
+      options:
+        - label: I reproduced this on a fresh clone (rules out local state).
+        - label: I checked the latest `main` (rules out already-fixed).

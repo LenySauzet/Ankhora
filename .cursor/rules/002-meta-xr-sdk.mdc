@@ -1,0 +1,68 @@
+---
+description: Meta XR SDK usage conventions for Ankhora — Building Blocks, Interaction SDK, passthrough
+alwaysApply: true
+---
+
+# Meta XR SDK conventions
+
+Ankhora targets Meta Quest 3 via the **Meta XR All-in-One SDK** on top of **OpenXR Plugin**, **XR Interaction Toolkit 3.x**, **XR Hands**, and **AR Foundation** with the **Meta-OpenXR** package. Stay on Unity 2022.3 LTS.
+
+## Building Blocks first
+
+**Always prefer Meta Building Blocks + Project Setup Tool over manual rigging.** When you need a new XR feature (passthrough, hand tracking, spatial anchor, camera rig, controllers, etc.):
+
+1. Open `Meta > Tools > Building Blocks`.
+2. Drag the block into the scene.
+3. Let the Project Setup Tool auto-fix Player Settings, XR Plugin Management, Android manifests, permissions.
+
+Bypassing Building Blocks is the leading cause of avoidable bugs (mis-configured camera rig, missing manifest permission, wrong layer mask). Only bypass it with an ADR.
+
+## Hand tracking → Interaction SDK only
+
+**All hand tracking interactions go through Meta's Interaction SDK.** Meta's documentation states explicitly that custom hand-tracking interactions *"make it difficult to get approved in the store"*. Ankhora's marketplace ambitions depend on store distributability, so this is a hard rule.
+
+For **ghost hand rendering** (visualisation of the expert's recorded hands):
+- Either `HandVisualizer` from `com.unity.xr.hands` (preferred — OpenXR-native).
+- Or `OVRHand` + `OVRSkeleton` from Meta XR Core SDK.
+- Apply a translucent material (`M_GhostHand`) to distinguish from the learner's own hands.
+
+## Passthrough enablement
+
+When adding passthrough (Quest 3 MR):
+
+1. `OVRManager > Quest Features > General > Passthrough Support` = `Required` (mandatory MR) or `Supported` (optional MR).
+2. `OVRManager > Insight Passthrough > Enable Passthrough`, or set `OVRManager.isInsightPassthroughEnabled = true` at runtime when you need lazy activation.
+
+Do **not** delete the Main Camera mechanically — that claim is myth. Use whichever camera rig your scene already standardises on (XRI or OVR).
+
+## Spatial anchors
+
+- One spatial anchor per "station" in an atelier (MVP cap: 1 anchor per masterclass).
+- Save & query via Meta's Spatial Anchor API. Persist with the Spatial Anchor's UUID — store it in the masterclass JSON next to the recording.
+- Object should sit within ~3 m of the anchor (Meta-documented bind range).
+- Quest 3 supports cross-room space discovery from SDK v66+, but stay within one room for the MVP.
+
+## Player Settings — Quest 3
+
+When configuring Android build for Quest 3:
+
+| Setting | Value |
+|---|---|
+| Texture Compression | ASTC |
+| Color Space | Linear |
+| Graphics APIs | **Vulkan only** (remove OpenGLES) |
+| Scripting Backend | IL2CPP |
+| Target Architectures | **ARM64** only |
+| Optimized Frame Pacing | ON |
+| Min API Level | Android 12 / API 32 |
+| Multithreaded Rendering | ON |
+
+Use the Project Setup Tool to auto-fix these whenever it offers — it stays correct as Meta SDK versions evolve.
+
+## Voice
+
+For in-headset voice commands and voice activity detection, use **Meta Voice SDK** (bundled in Meta XR All-in-One). Do **not** add a separate STT library on-device for the MVP. Whisper / OpenAI STT is reserved for V2 server-side transcription of recorded masterclasses.
+
+## SDK version pinning
+
+Pin Meta SDK versions in `Packages/manifest.json` (no `latest` floating). Bumping Meta SDK is a coordinated 3-person decision — record a one-line note under `docs/02-architecture/adr/` whenever you bump.

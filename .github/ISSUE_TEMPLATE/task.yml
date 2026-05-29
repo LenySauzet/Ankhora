@@ -1,0 +1,33 @@
+name: Task
+description: A piece of work that is neither a feature nor a bug — chore, infra, refactor, doc.
+title: "<type>(<scope>): <short summary>"
+labels: ["task"]
+body:
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type
+      options:
+        - chore
+        - refactor
+        - docs
+        - ci
+        - test
+        - perf
+        - build
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What needs to happen and why.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Definition of done
+      description: How will we know this is complete?
+    validations:
+      required: true

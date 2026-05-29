@@ -1,0 +1,55 @@
+---
+description: Unity 2022.3 LTS C# coding conventions and asset workflow for Ankhora
+alwaysApply: true
+---
+
+# Unity & C# conventions
+
+Unity Editor version is `2022.3.62f3` LTS. Do not upgrade or change it without an ADR under `docs/02-architecture/adr/`.
+
+## C# style
+
+- Types: `PascalCase` (`MasterclassRecorder`, `GhostHandRenderer`).
+- Methods, public properties: `PascalCase` (`StartRecording`, `IsPlaying`).
+- Fields: `camelCase`, with leading underscore for serialized private fields (`_handVisualizer`).
+- Constants: `UPPER_SNAKE_CASE` or `PascalCase` for `static readonly`.
+- Prefer `[SerializeField] private` over `public` for inspector fields. Public means "API surface", not "inspector input".
+- One MonoBehaviour per file. Filename = class name.
+- No `using UnityEditor` outside `Editor/` folders.
+- `nullable` is OFF in Unity 2022.3 by default — do not enable it project-wide without ADR.
+
+## Asset workflow
+
+- **Asset Serialization Mode**: Force Text. Verify via `Edit > Project Settings > Editor`. This is mandatory for a 3-person team — binary assets break PR diffs.
+- **Version Control Mode**: Visible Meta Files.
+- Never commit `Library/`, `Temp/`, `Logs/`, `UserSettings/`, `obj/`, `Build/`, `Builds/`. Already ignored via `.gitignore` — do not unignore.
+- Binary assets (PNG, FBX, WAV, MP4, etc.) are routed through Git LFS via `.gitattributes`. Run `git lfs install` once per local clone before committing binaries.
+- Scenes / prefabs / assets use the `unityyamlmerge` merge driver. Each teammate registers it once locally — procedure documented in `docs/05-operations/build-deploy.md`.
+
+## Naming conventions for assets
+
+- Scenes: `Scenes/<Area>/<Name>.unity` (e.g. `Scenes/Authoring/Recorder.unity`).
+- Prefabs: `Prefabs/<Category>/<Name>.prefab` (e.g. `Prefabs/XR/GhostHand.prefab`).
+- ScriptableObjects: `<Type>_<Name>.asset` (e.g. `MasterclassDefinition_TestClass.asset`).
+- Materials: `M_<Subject>` (e.g. `M_GhostHand`).
+- Textures: `T_<Subject>_<Channel>` (e.g. `T_GhostHand_Albedo`).
+- Audio: `A_<Category>_<Name>` (e.g. `A_Voice_TestClass`).
+
+## Scripts folder structure
+
+```
+Assets/
+  Scripts/
+    Authoring/        # expert-side: recording flow
+    Playback/         # learner-side: replay flow
+    Domain/           # POCOs, value objects, no UnityEngine dependency
+    Infrastructure/   # serialization, file IO, networking
+    XR/               # XR-specific MonoBehaviours and helpers
+    UI/               # in-headset UI
+    Editor/           # editor-only tools (any folder named Editor is excluded from runtime build)
+    Tests/
+      EditMode/
+      PlayMode/
+```
+
+Keep `Domain/` free of `UnityEngine` references — this enables unit-testable business logic.

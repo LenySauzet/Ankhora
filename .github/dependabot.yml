@@ -1,0 +1,19 @@
+version: 2
+
+# Dependabot keeps the only deps we ship in CI up-to-date.
+# Unity packages (Packages/manifest.json) are NOT tracked here — Unity Package Manager
+# is not supported by Dependabot. Meta XR SDK bumps stay manual + ADR-recorded.
+
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope
+    labels:
+      - dependencies
+      - ci
