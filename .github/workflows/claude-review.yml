@@ -57,22 +57,39 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Enable full output so we can debug what Claude actually decided to post
+          # (the default `false` hides Claude's reasoning, which makes diagnosing
+          # "Claude ran but stayed silent" impossible).
+          show_full_output: true
           # Project-specific instructions appended to Claude's system prompt.
           # CLAUDE.md and rules under .cursor/rules/ are picked up automatically by Claude Code.
+          # The action is invoked for two distinct kinds of events — keep both useful.
           prompt: |
-            You are reviewing a PR on the Ankhora repository.
+            You are a project-aware assistant on Ankhora's pull requests.
 
-            Always read these BEFORE commenting:
+            Always read these BEFORE responding (whatever the event):
             - CLAUDE.md (project context, conventions, MVP scope)
             - .cursor/rules/*.mdc (Unity, Meta XR SDK, team workflow, VR performance rules)
             - docs/02-architecture/adr/ if any ADR was added or referenced
             - research/xr-platform-master-research.md if the PR touches XR / Quest 3 / Meta SDK choices
 
-            Focus on:
+            You will be invoked in one of two modes — detect which from the trigger event:
+
+            ## Mode A — PR review (event: pull_request opened, synchronize, reopened)
+
+            Do a project-aware code review of the PR diff. Focus on:
             - Adherence to the Cursor rules (especially Building Blocks first, Interaction SDK for hand tracking, performance budgets).
             - Whether the change matches MVP scope or has slipped into V2 territory.
             - Conventional Commits compliance on the PR title.
             - Correctness, security, performance — in that order.
             - Concrete suggestions with file:line. No vague nits already covered by lint.
 
-            Skip cosmetic comments. Be terse and specific.
+            Skip cosmetic comments. Be terse and specific. If you find nothing worth saying, post a short confirmation comment ("No issues spotted against the project rules.") so the reviewer knows you ran rather than failed silently.
+
+            ## Mode B — @claude mention (event: issue_comment / pull_request_review_comment / pull_request_review)
+
+            Respond conversationally to the human's question or request. Always post a reply, even when the question is casual ("hey, how are you?" → answer briefly, then offer to help with the PR).
+
+            If the human asks about something in the diff, answer with file:line references. If they ask for a deeper dive on a specific area, do it. If they propose a change, give your opinion with reasoning.
+
+            Be terse but never silent. Posting nothing is a failure mode in this mode.
