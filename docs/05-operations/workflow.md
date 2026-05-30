@@ -547,6 +547,122 @@ Each teammate runs `git checkout main && git pull --ff-only` to land all merges 
 
 ---
 
+## Phase 11 — Resolve a merge conflict on a PR
+
+Happens when `main` has moved in the same region of code as your PR since you branched. GitHub then blocks the merge button and surfaces "This branch has conflicts that must be resolved".
+
+### When conflicts are expected
+
+| Scenario | Likelihood |
+|---|---|
+| Two PRs touch the same file in parallel | High on a 3-person team with a small file set |
+| Squash-merge of a PR, then continuation of work on the same branch | Guaranteed conflict (see "The squash-merge artifact" below) |
+| Dependabot bump touches a workflow you're also editing | Common around weekly bumps |
+| Unity scene edited from two branches | Common — and Unity's YAML merge driver handles most of it |
+
+### The standard procedure (always works)
+
+#### Step 1 — Sync your local main
+
+```bash
+git checkout main
+git pull --ff-only
+```
+
+#### Step 2 — Rebase your PR branch on the fresh main
+
+```bash
+git checkout <pr-branch>
+git rebase origin/main
+```
+
+Three possible outcomes:
+
+| Outcome | What it looks like | Next step |
+|---|---|---|
+| **A. Clean rebase** | `Rebasage et mise à jour de refs/heads/X avec succès.` | Go to Step 4 |
+| **B. Cherry-pick skipped** | `avertissement : le commit XXXXXX appliqué précédemment a été sauté` | Normal — Git detected duplicate content already on main. Go to Step 4 |
+| **C. Real conflict** | `CONFLICT (content): Merge conflict in <file>` and the rebase pauses | Go to Step 3 |
+
+#### Step 3 — Resolve conflicts (only if outcome C)
+
+For each paused commit, open the conflicted files. You'll see markers:
+
+```
+<<<<<<< HEAD
+content currently on main
+=======
+content from your branch
+>>>>>>> <your-commit-sha>
+```
+
+Edit each file to keep the right content (often a mix of both sides), then strip the `<<<<<<<`, `=======`, `>>>>>>>` markers. Save. Then:
+
+```bash
+git add <resolved file>
+git rebase --continue
+```
+
+Git moves to the next paused commit (or finishes the rebase if that was the last one). If you get lost or want to back out:
+
+```bash
+git rebase --abort
+```
+
+This restores the branch to its pre-rebase state.
+
+**For Unity scenes / prefabs / `.asset` files**: the `unityyamlmerge` driver is registered in `.gitattributes` and runs automatically — it resolves ~90% of YAML conflicts without you touching them. If it can't, open the scene in Unity Editor and resolve visually before staging and continuing.
+
+#### Step 4 — Force-push the rebased branch
+
+Rebase **rewrites** the commit SHAs on your branch, so a plain `git push` is refused. Use:
+
+```bash
+git push --force-with-lease
+```
+
+- `--force` overwrites the remote blindly — if a teammate pushed to your branch between your fetch and your push, their commits are silently dropped.
+- `--force-with-lease` only force-pushes if the remote is in the state you last fetched. If it has moved, the push is refused so you can investigate.
+
+**Golden rule**: `--force-with-lease` on your own feature branch is fine. Force-push to `main` is blocked by branch protection — and that's the correct behaviour.
+
+### Alternative — GitHub's "Resolve conflicts" web editor
+
+For trivial conflicts on small text files (markdown, YAML, short code), the **Resolve conflicts** button on the PR page opens an in-browser editor where you edit and commit directly.
+
+**Avoid it for**:
+
+- Unity scenes (`*.unity`)
+- Prefabs (`*.prefab`)
+- Files longer than ~100 lines
+- Anything where you'd want to run tests after resolving
+
+For those, do the local rebase — you get your IDE, the Unity merge driver, and the ability to test before pushing.
+
+### The squash-merge artifact (a recurring gotcha)
+
+When you squash-merge a PR, GitHub:
+
+1. Takes all the commits on the PR branch.
+2. Squashes them into **one new commit on `main`** with a brand new SHA.
+3. Closes the PR.
+
+The original commits on the PR branch still exist. If you (or anyone) continues working on **the same branch** afterwards, every follow-up commit appears to "duplicate" content that's already on `main` under a different SHA. Git can sometimes auto-detect this via patch-id and skip the duplicate during rebase (outcome B above), but the cleaner fix is to never put yourself in that situation:
+
+**Rule**: after your PR is squash-merged, **do not continue working on that branch**. Sync `main`, create a fresh branch for follow-up work.
+
+```bash
+# After your PR was squash-merged:
+git checkout main
+git pull --ff-only
+git branch -d <merged-branch>          # delete the old branch locally
+git checkout -b <new-branch-for-followup>
+```
+
+If you forget and end up with a confusing conflict on a branch that "should" be clean, the rebase procedure above resolves it — but it's friction you don't need.
+
+---
+
 ## Tooling reference — Slash commands inventory
 
 ### Cursor commands (in `.cursor/commands/*.md`)
@@ -618,6 +734,16 @@ POST-MERGE
   git checkout main && git pull --ff-only
   /mirror-epitech                                      (Cursor)
   git branch -d feat/<scope>-<slug>
+
+CONFLICT RESOLUTION (when GitHub says "conflicts must be resolved")
+  git checkout main && git pull --ff-only
+  git checkout <pr-branch>
+  git rebase origin/main
+    — clean ............. → push
+    — cherry-pick skipped → push  (normal, post squash-merge artifact)
+    — CONFLICT .......... → edit conflicted files, strip <<<<<<< markers,
+                            git add <files>, git rebase --continue
+  git push --force-with-lease
 ```
 
 ---
@@ -633,6 +759,10 @@ POST-MERGE
 | CodeRabbit reports "Review skipped" | No substantive code change to review (e.g. docs-only PR) | Fine, this counts as `pass` |
 | Unity build fails with `Missing Unity License` | The secret silo is mismatched (Actions vs Dependabot) | Add the 3 Unity secrets to **both** silos |
 | `mirror-epitech.yml` workflow shows red | EPITECH_PAT is `Pending` — workflow is disabled by design | Use `/mirror-epitech` manually until PAT lands |
+| `/mirror-epitech` reports `LFS budget exceeded` | The Epitech org's LFS quota is at 0 — does not affect our working repo | Already handled — the command passes `--no-verify` to push refs without LFS blobs |
 | Conventional Commits lint complains | PR title doesn't follow the format | Edit the title — never the commits, since we squash-merge |
+| PR shows "This branch has conflicts" right after a related PR squash-merged | Squash-merge artifact — the original PR's commits still live on the branch | See [Phase 11](#phase-11--resolve-a-merge-conflict-on-a-pr). Quick fix: `git rebase origin/main && git push --force-with-lease` |
+| `git push` refused because rebase rewrote history | Expected — push needs `--force-with-lease` after a rebase | `git push --force-with-lease` (never `--force` on a shared branch) |
+| Rebase pauses with conflicts you can't figure out | Complex overlap — best resolved with full context | `git rebase --abort`, ask a teammate or open the file in your IDE with the inline merge UI |
 
 If something is broken and not listed here, add a row.
