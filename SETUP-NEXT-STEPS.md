@@ -35,10 +35,12 @@ git push -u origin main
 
 `Settings > General > Pull Requests`:
 
-- ☑️ Allow squash merging (default message: **Pull request title**)
-- ☐ Allow merge commits (off)
-- ☐ Allow rebase merging (off)
-- ☑️ Automatically delete head branches
+- ☐ **Allow merge commits** — OFF (no merge bubbles, keep `main` linear)
+- ☑️ **Allow squash merging** — ON. Click the "Default commit message" dropdown and pick **"Pull request title"** (NOT "Default message"). This is what makes squash-merge + Conventional Commits work — every commit on `main` becomes a clean `feat(...)` / `fix(...)` line, suitable for an auto-generated `CHANGELOG.md`.
+- ☐ **Allow rebase merging** — OFF (would replay each WIP commit onto `main` and pollute history)
+- ☐ **Always suggest updating PR branches** — OFF (manual rebase keeps merge commits off feature branches)
+- ☑️ **Allow auto-merge** — ON. Lets a reviewer hit "Auto-merge" and have GitHub squash-merge as soon as CI + reviews are green. Saves time when GameCI takes ~5-10 min.
+- ☑️ **Automatically delete head branches** — ON (feature branches disappear after merge)
 
 ### 1.4 GitHub Project (kanban)
 
@@ -53,17 +55,48 @@ git push -u origin main
 
 Add each as a **repository secret** in `Settings > Secrets and variables > Actions > New repository secret`.
 
-### 2.1 `UNITY_LICENSE` (+ email + password)
+### 2.1 Unity license — depends on your license type
 
-GameCI needs a Unity Personal licence file. Generate it once:
+#### Path A — Student / Plus / Pro license with a visible serial — Ankhora is on this path ✅
 
-1. Locally, install Unity Hub if not already done.
-2. Run the GameCI activation workflow once: clone <https://github.com/game-ci/unity-actions> and follow `unity-request-activation-file/README.md`. The 5-min flow yields a `.alf` file.
-3. Upload that `.alf` to <https://license.unity3d.com/manual>, sign in, download the resulting `Unity_v2022.x.ulf`.
-4. Copy the file's content as the value of secret `UNITY_LICENSE`.
-5. Also add `UNITY_EMAIL` and `UNITY_PASSWORD` (the Unity ID credentials).
+`ci.yml` is wired for this path. Add three repository secrets at `Settings > Secrets and variables > Actions > New repository secret`:
 
-> Personal licence is fine for student / non-commercial use. Re-issue annually if it expires.
+| Secret name | Value | Where to find it |
+|---|---|---|
+| `UNITY_EMAIL` | Unity ID email | The one you log into Unity Hub with |
+| `UNITY_PASSWORD` | Unity ID password | Same login |
+| `UNITY_SERIAL` | Unity serial number (`Sx-XXXX-XXXX-XXXX-XXXX-XXXX`) | `id.unity.com` → Account → Subscriptions, or the email Unity sent when issuing the Student license |
+
+> Treat the serial like a password — do not commit it, do not paste it in chat. Once it is in GitHub Secrets it is write-only (you can replace it but not read it back). Keep a copy in your password manager too.
+
+After saving the three secrets, that is it — open a test PR to confirm the build job authenticates.
+
+#### Path B — Personal license (no visible serial)
+
+Only if you have a Personal license. Generate a `.ulf` via the manual activation flow:
+
+1. In Ankhora, create a one-shot workflow `.github/workflows/_unity-activation.yml` on a throwaway branch:
+   ```yaml
+   name: Unity — request activation file (one-shot)
+   on:
+     workflow_dispatch: {}
+   jobs:
+     request:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: game-ci/unity-request-activation-file@v2
+           id: getManualLicenseFile
+           with:
+             unityVersion: 2022.3.62f3
+         - uses: actions/upload-artifact@v4
+           with:
+             name: Unity_v2022.3.62f3.alf
+             path: ${{ steps.getManualLicenseFile.outputs.filePath }}
+   ```
+2. Push the branch, run the workflow manually from `Actions`, download the `.alf` artifact.
+3. Upload `.alf` to <https://license.unity3d.com/manual>, sign in, pick **Personal**, download the `Unity_v2022.x.ulf`.
+4. Paste the full XML content of the `.ulf` as the value of secret `UNITY_LICENSE`.
+5. Delete the throwaway workflow + branch. Ping me to swap `ci.yml` to consume `UNITY_LICENSE`.
 
 ### 2.2 `CLAUDE_CODE_OAUTH_TOKEN`
 
