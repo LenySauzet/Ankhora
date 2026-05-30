@@ -31,12 +31,17 @@ concurrency:
 jobs:
   review:
     name: Project-aware review
-    # Run on every PR event, OR only on @claude mentions for comment events.
+    # Run on every human PR event, OR only on @claude mentions for comment events.
+    # Skip Dependabot-triggered PRs entirely — anthropics/claude-code-action refuses
+    # to act on bot-initiated workflows by default, and CodeRabbit + the Unity CI build
+    # are already adequate guardrails for routine version bumps.
     if: |
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude') && github.event.issue.pull_request) ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude'))
+      github.actor != 'dependabot[bot]' && (
+        github.event_name == 'pull_request' ||
+        (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude') && github.event.issue.pull_request) ||
+        (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+        (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude'))
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: read
