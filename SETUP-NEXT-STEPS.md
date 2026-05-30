@@ -135,18 +135,18 @@ As of 2026-05-30, the PAT is in `Pending` status with no Epitech Owner currently
 gh workflow disable mirror-epitech.yml   # already done
 ```
 
-Until an Epitech Owner approves the PAT, sync `main` to the Epitech repo **by hand** after each merge using Lény's personal GitHub credentials (which already have push access to `T-VIR-902-MPL_2`). The commands below mirror `origin/main` from any branch with any working tree state — they never read your local branch:
+Until an Epitech Owner approves the PAT, sync `main` to the Epitech repo **by hand** after each merge using Lény's personal GitHub credentials (which already have push access to `T-VIR-902-MPL_2`). The commands below mirror `origin/main` from any branch with any working tree state — they never read your local branch and they skip LFS uploads because the Epitech org's LFS budget is exhausted:
 
 ```bash
 git fetch origin main
 git remote get-url epitech 2>/dev/null \
   || git remote add epitech https://github.com/EpitechMscProPromo2026/T-VIR-902-MPL_2.git
-git lfs fetch origin main
-git lfs push --all epitech
-git push epitech +refs/remotes/origin/main:refs/heads/main
+git push --no-verify epitech +refs/remotes/origin/main:refs/heads/main
 ```
 
 Easier: run **`/mirror-epitech`** in Cursor — the command at `.cursor/commands/mirror-epitech.md` runs the same sequence.
+
+> **LFS limitation**: the Epitech org reports `This repository exceeded its LFS budget`. The push above skips the LFS pre-push hook (`--no-verify`) so git refs and pointer files still land on Epitech, but the binary blobs they point to (today: `Cover.png`, `Assets/TutorialInfo/Icons/URP.png`) stay only on `LenySauzet/Ankhora`. This is acceptable because the Epitech repo is for grading visibility, not for clone-and-build. When an Owner raises the LFS budget, remove `--no-verify`, re-add `git lfs fetch origin main && git lfs push --all epitech` before the ref push, and run `/mirror-epitech` once to backfill.
 
 When the PAT is eventually approved:
 
