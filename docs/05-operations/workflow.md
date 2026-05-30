@@ -8,7 +8,7 @@ Read [CLAUDE.md](../../CLAUDE.md) first if you have not already — it sets the 
 
 ## TL;DR — One-glance flow
 
-```
+```text
 IDEA
   ↓
 ISSUE  (GitHub issue, picks a template, auto-added to the Kanban)
@@ -128,7 +128,7 @@ Only do this phase for **non-trivial** features. Trivial fixes can skip straight
 
 Open Claude Code (in Warp) and invoke:
 
-```
+```text
 /brainstorming
 ```
 
@@ -136,7 +136,7 @@ This is a Superpowers skill that walks you through user intent, requirements, de
 
 For multi-step plans (the feature has several files / interactions / decisions), follow up with:
 
-```
+```text
 /writing-plans
 ```
 
@@ -228,7 +228,7 @@ git checkout -b feat/recorder-hand-capture
 
 In Cursor's chat panel:
 
-```
+```text
 /add-feature recorder hand-capture "Capture hand joints to JSON timeline" @teammate1
 ```
 
@@ -266,7 +266,7 @@ The loop depends on your machine.
 
 **Mac (Lény)** — no Quest Link:
 
-```
+```text
 modify code in Cursor
   ↓
 build APK (Unity Editor or /build-android command)
@@ -282,7 +282,7 @@ Optionally use **Meta XR Simulator** for fast-iteration on UI / logic that does 
 
 **Windows (teammates)** — with Quest Link:
 
-```
+```text
 modify code in Cursor
   ↓
 Play Mode in Unity Editor via Quest Link
@@ -298,7 +298,7 @@ Windows machines are the natural place for tight hand-tracking iteration. Lény 
 
 When ready to ship to device, the canonical entry point is the Cursor command:
 
-```
+```text
 /build-android         # dev build, installs to connected device
 /build-android release # release build, installs to connected device
 /build-android dev no  # dev build, no install
@@ -334,7 +334,7 @@ git diff --staged  # staged changes
 
 In Claude Code (Warp), invoke the global skill:
 
-```
+```text
 /git-commit
 ```
 
@@ -349,7 +349,7 @@ git commit -m "feat(recorder): persist hand joints to JSON timeline"
 
 ### Conventional Commits format — required on every commit
 
-```
+```text
 <type>(<scope>): <description in the imperative, ≤72 chars>
 
 <optional body>
@@ -449,7 +449,7 @@ If feedback requires changes:
 
 ### Squash and merge
 
-When the 3 required checks are green and you (or a teammate) approves, click **Squash and merge** on GitHub.
+When the 3 required checks are green, click **Squash and merge** on GitHub. You don't need to wait for a human approval — that's best-effort, not blocking (see Phase 7).
 
 | Setting we have | Effect |
 |---|---|
@@ -488,7 +488,7 @@ While `EPITECH_PAT` is pending Epitech-org approval, the workflow is **disabled*
 
 In Cursor's chat:
 
-```
+```text
 /mirror-epitech
 ```
 
@@ -588,7 +588,7 @@ Three possible outcomes:
 
 For each paused commit, open the conflicted files. You'll see markers:
 
-```
+```text
 <<<<<<< HEAD
 content currently on main
 =======
@@ -698,7 +698,7 @@ When in doubt, write a Cursor command (cheaper, more focused). Skills are heavie
 
 ## Cheat sheet — print this
 
-```
+```text
 PLANNING
   /brainstorming                       (Claude Code)
   Create an Issue                      (GitHub)
