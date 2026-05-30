@@ -146,7 +146,7 @@ git push --no-verify epitech +refs/remotes/origin/main:refs/heads/main
 
 Easier: run **`/mirror-epitech`** in Cursor — the command at `.cursor/commands/mirror-epitech.md` runs the same sequence.
 
-> **LFS limitation**: the Epitech org reports `This repository exceeded its LFS budget`. The push above skips the LFS pre-push hook (`--no-verify`) so git refs and pointer files still land on Epitech, but the binary blobs they point to (today: `Cover.png`, `Assets/TutorialInfo/Icons/URP.png`) stay only on `LenySauzet/Ankhora`. This is acceptable because the Epitech repo is for grading visibility, not for clone-and-build. When an Owner raises the LFS budget, remove `--no-verify`, re-add `git lfs fetch origin main && git lfs push --all epitech` before the ref push, and run `/mirror-epitech` once to backfill.
+> **LFS limitation (downstream only)**: the Epitech org reports `This repository exceeded its LFS budget`. The push above skips the LFS pre-push hook (`--no-verify`) so git refs and pointer files still land on Epitech, but the binary blobs themselves stay only on `LenySauzet/Ankhora`. **This does not constrain the team's workflow on the working repo** — keep adding LFS-tracked assets freely. The Epitech repo is a grading-visibility view, not a clone-and-build target; graders see file existence, history, and commits — that's enough for evaluation. If the budget is ever raised, remove `--no-verify`, re-add `git lfs fetch origin main && git lfs push --all epitech` before the ref push, and run `/mirror-epitech` once to backfill.
 
 When the PAT is eventually approved:
 

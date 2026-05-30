@@ -45,14 +45,18 @@ When the user invokes `/mirror-epitech`:
 
 ## Known limitation — LFS budget exhausted on the Epitech org
 
-The Epitech org `EpitechMscProPromo2026` has 0 GB of Git LFS budget remaining (`This repository exceeded its LFS budget`). Until an Epitech Owner raises it, the mirror **cannot** ship LFS objects. The workaround above pushes git refs + LFS pointer files only — the binary blobs themselves stay on `LenySauzet/Ankhora`.
+The Epitech org `EpitechMscProPromo2026` has 0 GB of Git LFS budget remaining (`This repository exceeded its LFS budget`). Until an Epitech Owner raises it, the mirror cannot ship LFS objects.
 
-This is normally fine because the Epitech repo's job is to expose the work to the school's grading process, not to be cloned and run. But: keep new LFS-tracked binaries minimal. If a binary asset is genuinely needed downstream, host it externally (a Release on the working repo, an S3 bucket, etc.) and reference it from code rather than committing it as LFS.
+**This does not constrain the team's workflow on `LenySauzet/Ankhora`.** Add LFS-tracked binaries as needed — models, audio, video, textures, whatever. The working repo is the source of truth where the team codes, builds, and ships to Quest; LFS works fully there.
 
-To restore full mirroring once the budget is raised:
+The Epitech mirror is purely a grading-visibility view. The graders scroll the history to evaluate progress; they do not clone-and-build. The mirror pushes git refs + LFS *pointer files* (small text files describing each LFS-tracked blob), which is enough for the grading view to show that the files exist, who added them, and when. If a grader ever needs the actual binary, they can fetch it from `LenySauzet/Ankhora` directly.
 
-1. Remove the `--no-verify` flag from step 4 and reinstate the `git lfs fetch origin main` + `git lfs push --all epitech` step from before.
+If at some point an Epitech Owner raises the LFS budget and the team wants the Epitech repo to carry the binaries too:
+
+1. Remove the `--no-verify` flag from step 4 and reinstate `git lfs fetch origin main` + `git lfs push --all epitech` before the ref push.
 2. Run `/mirror-epitech` once to backfill the missing LFS objects on Epitech.
+
+Until then, ignore the limitation and keep working normally.
 
 ## Arguments
 
