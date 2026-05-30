@@ -127,6 +127,35 @@ PAT used by `mirror-epitech.yml` to push `main` to `EpitechMscProPromo2026/T-VIR
 
 If the Epitech org requires the token to be approved, an Epitech admin must approve it (one-shot).
 
+#### Current status — Mirror disabled, manual fallback active
+
+As of 2026-05-30, the PAT is in `Pending` status with no Epitech Owner currently reachable. The `mirror-epitech.yml` workflow has been **disabled** to avoid red checks on every push:
+
+```bash
+gh workflow disable mirror-epitech.yml   # already done
+```
+
+Until an Epitech Owner approves the PAT, sync `main` to the Epitech repo **by hand** after each merge using Lény's personal GitHub credentials (which already have push access to `T-VIR-902-MPL_2`):
+
+```bash
+git checkout main
+git pull --ff-only origin main
+git remote get-url epitech 2>/dev/null \
+  || git remote add epitech https://github.com/EpitechMscProPromo2026/T-VIR-902-MPL_2.git
+git lfs push --all epitech
+git push epitech +refs/heads/main:refs/heads/main
+```
+
+Easier: run **`/mirror-epitech`** in Cursor — the command at `.cursor/commands/mirror-epitech.md` runs the same script with pre-flight checks (clean tree, on main, up-to-date).
+
+When the PAT is eventually approved:
+
+```bash
+gh workflow enable mirror-epitech.yml
+gh workflow run mirror-epitech.yml
+# Delete .cursor/commands/mirror-epitech.md and this subsection
+```
+
 ## 3. CodeRabbit (free for public OSS repos)
 
 1. Go to <https://app.coderabbit.ai>, sign in with GitHub.
