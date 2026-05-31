@@ -31,16 +31,21 @@ concurrency:
 jobs:
   review:
     name: Project-aware review
-    # Run on every human PR event, OR only on @claude mentions for comment events.
-    # Skip Dependabot-triggered PRs entirely — anthropics/claude-code-action refuses
-    # to act on bot-initiated workflows by default, and CodeRabbit + the Unity CI build
-    # are already adequate guardrails for routine version bumps.
+    # Gate hard on WHO can drive this job, because it runs with write tokens and now
+    # auto-injects untrusted content (comment bodies, PR diffs) into the LLM:
+    #   - Skip Dependabot (the action refuses bot-initiated workflows anyway).
+    #   - pull_request: only same-repo branches, never forks. The team pushes feature
+    #     branches straight to LenySauzet/Ankhora (no fork workflow), and fork PRs would
+    #     otherwise let an outsider feed an untrusted diff to a privileged run.
+    #   - @claude comment/review events: only from OWNER / MEMBER / COLLABORATOR. This
+    #     repo is public, so without this anyone could comment "@claude …" and trigger
+    #     a write-scoped, secret-bearing run (issue_comment always runs in the base repo).
     if: |
       github.actor != 'dependabot[bot]' && (
-        github.event_name == 'pull_request' ||
-        (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude') && github.event.issue.pull_request) ||
-        (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
-        (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude'))
+        (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+        (github.event_name == 'issue_comment' && github.event.issue.pull_request && contains(github.event.comment.body, '@claude') && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)) ||
+        (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude') && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)) ||
+        (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude') && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.review.author_association))
       )
     runs-on: ubuntu-latest
     permissions:
@@ -57,6 +62,16 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Force "tag mode" even though we pass a custom `prompt` below.
+          # Without this, providing `prompt` puts the action in "agent mode", which
+          # (1) does NOT inject the triggering event context (the @claude comment body,
+          # the PR diff) and (2) does NOT post anything back — the reply only lands in
+          # the action logs. That is exactly why Claude "reacted but stayed silent" on
+          # @claude follow-up comments. track_progress: true forces tag mode for all of
+          # our trigger events (pull_request / issue_comment / pull_request_review[_comment]),
+          # which injects full GitHub context, keeps `prompt` as appended instructions,
+          # and auto-creates + updates a tracking comment with the reply.
+          track_progress: true
           # Enable full output so we can debug what Claude actually decided to post
           # (the default `false` hides Claude's reasoning, which makes diagnosing
           # "Claude ran but stayed silent" impossible).
