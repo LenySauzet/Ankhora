@@ -26,7 +26,13 @@ on:
 
 concurrency:
   group: claude-${{ github.event.pull_request.number || github.event.issue.number }}
-  cancel-in-progress: true
+  # Must stay false. In tag mode the action posts a "Claude is working…" tracking
+  # comment, which itself fires an issue_comment event → a second run enters this same
+  # group. With cancel-in-progress: true that second run cancels the first MID-ANSWER
+  # (it is then skipped by the `if:`, but the cancellation already killed the reply).
+  # false lets the bot-triggered run queue harmlessly instead. The only thing we give
+  # up is auto-cancelling stale runs on rapid pushes — negligible for a 3-person team.
+  cancel-in-progress: false
 
 jobs:
   review:
