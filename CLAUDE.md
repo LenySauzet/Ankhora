@@ -77,6 +77,7 @@ How the transport works (per-OS, per-user — **not** committed as a project `.m
 
 ## Conventions
 
+- **License**: **Apache-2.0** (`LICENSE` + `NOTICE` at repo root; authors in `AUTHORS`). Permissive with an explicit patent grant — chosen for the XR patent surface and to keep store distribution / a commercial V2 open. Copyright held by *The Ankhora Authors* (Allan Thamvongs, Lény Sauzet, Matthieu Julie). New source files don't need a per-file header for the MVP; if added later, use the standard Apache short header.
 - **Language**: all code, comments, file content, and agent output in **English**. (Source: `.cursor/commands/example.md`.) The team communicates in French; deliverables stay in English.
 - **C# style**: standard Unity conventions — `PascalCase` types, `camelCase` fields, `[SerializeField] private` preferred over public fields.
 - **Asset Serialization Mode**: Force Text (required for diffable scenes/prefabs in a 3-person team). Verify in `Edit > Project Settings > Editor`.
