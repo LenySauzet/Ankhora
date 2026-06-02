@@ -12,6 +12,12 @@
   <img alt="Last Commit" src="https://img.shields.io/github/last-commit/LenySauzet/ankhora?style=flat&color=blue">
 </div>
 
+## Contributing
+
+Contributions are welcome. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the
+workflow (branching, Conventional Commits, PR requirements) and our
+[`Code of Conduct`](CODE_OF_CONDUCT.md).
+
 ## License
 
 Ankhora is open source under the [Apache License 2.0](LICENSE) — © 2026 The Ankhora Authors.
