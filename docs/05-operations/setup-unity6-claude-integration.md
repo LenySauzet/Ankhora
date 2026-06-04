@@ -41,7 +41,7 @@ This PR is **not** about product features. The MVP product spec lives in its own
 - [ ] Write the migration ADR. *(deferred — after migration confirmed)*
 
 ### Claude Code ↔ Unity integration
-- [ ] Install + verify a Unity MCP bridge (dossier recommends `CoplayDev/unity-mcp`) in Claude Code.
+- [x] Connect Claude Code to Unity 6's **native** MCP Server (`com.unity.ai.assistant`) — supersedes the community `CoplayDev/unity-mcp`. *(registered + transport connected; still needs in-Unity approval and a fresh Claude Code session to load the tools — see "Unity MCP — connecting Claude Code" below)*
 - [ ] Confirm whether a dedicated "Meta XR MCP" actually exists (claim from a video summary — unverified).
 - [ ] (Optional) Unity AI Assistant package `com.unity.ai.assistant` — Unity-native AI, Unity 6 only. Distinct from Claude Code.
 
@@ -54,6 +54,37 @@ This PR is **not** about product features. The MVP product spec lives in its own
 ### Doc updates (after migration lands, ideally after PR #12 merges)
 - [ ] Update version refs `2022.3.62f3` → Unity 6 in `CLAUDE.md`, the research dossier, and the Foundation plan.
 - [ ] Drop the "stays on Unity 2022.3" note in `CLAUDE.md` (superseded by the ADR).
+
+## Unity MCP — connecting Claude Code (verified 2026-06-04)
+
+Unity 6 ships a **native MCP server** (package `com.unity.ai.assistant`, panel
+`Project Settings → AI → Unity MCP Server`). It supersedes the community
+`CoplayDev/unity-mcp` from the dossier — we use the native one.
+
+How it works: Unity installs a **relay binary** under `~/.unity/relay/` when the editor
+starts; the MCP client launches it with `--mcp` and it bridges to the running editor.
+
+**The relay path is per-OS and per-user, so it is NOT committed as a project `.mcp.json`.**
+Each developer registers it **locally** with the command for their platform:
+
+- **macOS (Apple Silicon):**
+  ```bash
+  claude mcp add unity-mcp -s local -- "$HOME/.unity/relay/relay_mac_arm64.app/Contents/MacOS/relay_mac_arm64" --mcp
+  ```
+- **Windows:**
+  ```bash
+  claude mcp add unity-mcp -s local -- "%USERPROFILE%\.unity\relay\relay_win.exe" --mcp
+  ```
+
+Then:
+1. **Restart Claude Code** (start a fresh session) so it loads the Unity tools — servers added mid-session are not hot-loaded.
+2. **Approve in Unity:** `Project Settings → AI → Unity MCP Server` → accept the pending Claude Code connection (it appears under *Connected Clients*). Previously approved clients reconnect automatically.
+3. **Test:** ask Claude *"Read the Unity console and summarize any warnings or errors"* → it should call `Unity_ReadConsole`.
+
+Keep the Unity editor open — the bridge only runs while the editor is running. More tools
+can be enabled in the panel under **Tools (N of 52 enabled)**.
+
+Source: Unity docs — *Get started with Unity MCP* (`com.unity.ai.assistant`).
 
 ## Notes / clarifications
 
