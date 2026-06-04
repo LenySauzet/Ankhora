@@ -34,26 +34,30 @@ This PR is **not** about product features. The MVP product spec lives in its own
 ## Checklist
 
 ### Migration to Unity 6
-- [ ] Pin the exact Unity 6 version (the LTS/recommended `6000.x` shown in Unity Hub); all 3 machines install it.
-- [ ] Open the project in Unity 6 (in place), let the upgrader run, verify the empty scene still opens.
-- [ ] Commit the upgrade diff (ProjectSettings, packages, URP assets, ProjectVersion.txt).
-- [ ] Verify Meta XR SDK ↔ Unity 6 version pairing (do **before** relying on it). *(deferred — awaiting go-ahead)*
-- [ ] Write the migration ADR. *(deferred — after migration confirmed)*
+- [x] Pin the exact Unity 6 version — **`6000.4.10f1`** (`ProjectSettings/ProjectVersion.txt`); all 3 machines install it.
+- [x] Open the project in Unity 6 (in place), let the upgrader run, verify the empty scene still opens. URP upgraded `14.0.12` → `17.4.0`.
+- [ ] Commit the upgrade diff (ProjectSettings, packages, URP assets, ProjectVersion.txt). *(changes present in working tree, not yet committed)*
+- [x] Verify Meta XR SDK ↔ Unity 6 version pairing — `com.meta.xr.sdk.all` `201.0.0` installed and resolving on Unity 6; `meta_*` MCP tools respond.
+- [ ] Write the migration ADR. *(still deferred — after the upgrade diff is committed)*
 
 ### Claude Code ↔ Unity integration
-- [x] Connect Claude Code to Unity 6's **native** MCP Server (`com.unity.ai.assistant`) — supersedes the community `CoplayDev/unity-mcp`. *(registered + transport connected; still needs in-Unity approval and a fresh Claude Code session to load the tools — see "Unity MCP — connecting Claude Code" below)*
-- [ ] Confirm whether a dedicated "Meta XR MCP" actually exists (claim from a video summary — unverified).
-- [ ] (Optional) Unity AI Assistant package `com.unity.ai.assistant` — Unity-native AI, Unity 6 only. Distinct from Claude Code.
+- [x] Connect Claude Code to Unity 6's **native** MCP Server (`com.unity.ai.assistant`) — supersedes the community `CoplayDev/unity-mcp`. Registered as `unity-mcp` (relay `relay_mac_arm64`, local scope), transport connected, `Unity_GetProjectData` returns `success: true`.
+- [x] **Confirmed: a dedicated Meta XR MCP exists.** It is the package `com.meta.xr.unity-mcp.extension` (`github.com/meta-quest/Unity-MCP-Extensions`), installed in `manifest.json`. It extends the **same** `unity-mcp` relay with `meta_*` building-block tools (camera rig, interaction rig, grabbable, canvas interaction, teleport, android manifest). Verified: `meta_get_config_information` returns `success: true`. Not a separate MCP server — one transport, two tool families.
+- [x] Unity AI Assistant package `com.unity.ai.assistant` `2.10.0-pre.1` installed (it is what ships the native MCP server). Distinct from Claude Code.
 
 ### Project-local `.claude/`
+*(not started — no project-local `.claude/` directory exists yet)*
 - [ ] `.claude/skills/` — project skills (e.g. `unity-editor-ops`, `quest-build-run`, `meta-building-blocks`).
 - [ ] `.claude/commands/` — e.g. `/build-android`, `/run-editmode-tests`, `/sideload`.
 - [ ] `.claude/agents/` — a Unity-MCP implementer agent.
 - [ ] `.claude/settings.json` hooks — e.g. run EditMode tests on C# change, format C#.
 
+### Cleanup
+- [x] Delete the empty duplicate folders Unity created during XR setup: `Assets/XR 1`, `Assets/XR 2` (+ their `.meta`), and `Assets/XR/Settings 1`. Done 2026-06-04 — confirmed empty, their GUIDs had zero references project-wide, removed folder + `.meta` together.
+
 ### Doc updates (after migration lands, ideally after PR #12 merges)
-- [ ] Update version refs `2022.3.62f3` → Unity 6 in `CLAUDE.md`, the research dossier, and the Foundation plan.
-- [ ] Drop the "stays on Unity 2022.3" note in `CLAUDE.md` (superseded by the ADR).
+- [x] Update version refs `2022.3.62f3` → Unity 6 in `CLAUDE.md` (done 2026-06-04). *(research dossier + Foundation plan still reference 2022.3 — pending)*
+- [x] Drop the "stays on Unity 2022.3" note in `CLAUDE.md` — replaced with a "migrated to Unity 6, ADR pending" note.
 
 ## Unity MCP — connecting Claude Code (verified 2026-06-04)
 
