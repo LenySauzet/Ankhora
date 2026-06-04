@@ -21,8 +21,12 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# NOTE: pinned to 6000.4.8f1 (not the project's 6000.4.10f1) because GameCI has
+# not yet published a Docker image for 6000.4.10f1. Same minor stream (6000.4),
+# so Unity opens the project with only a patch-version warning. Bump to match the
+# project once unityci/editor:ubuntu-6000.4.10f1-android exists.
 env:
-  UNITY_VERSION: 2022.3.62f3
+  UNITY_VERSION: 6000.4.8f1
 
 jobs:
   build-android:
