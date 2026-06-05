@@ -82,7 +82,8 @@ How the transport works (per-OS, per-user — **not** committed as a project `.m
 - **Branches**: short-lived feature branches (`feat/<scope>-<slug>`, `fix/<slug>`) merged into `main` via PR. No direct push to `main`.
 - **Pull Requests**: every PR requires (1) at least one human review, (2) green CI (build + AI code review). Merge strategy: **squash and merge** (keeps `main` history linear and conventional-commit-friendly).
 - **Cursor commands**: kebab-case filenames, no YAML frontmatter, written in English. Template at `.cursor/commands/example.md`.
-- **Architectural decisions** of consequence are recorded as ADRs under `docs/02-architecture/adr/`. Until that folder exists, document trade-offs as new files under `research/`.
+- **Architectural decisions** of consequence are recorded as ADRs under `docs/02-architecture/adr/` (the folder now exists, with a template `0000-adr-template.md` and `0001-unity6-migration.md`). Add new ones with the `/write-adr` command.
+- **Formatting** is encoded once in `.editorconfig` at the repo root (C# naming, UTF-8, LF, final newline), mirroring `.cursor/rules/001-unity-conventions.mdc`. Document-grade only — no csharpier/pre-commit enforcement is wired.
 
 ## What "build" / "run" / "test" mean today
 
@@ -113,6 +114,41 @@ Per the dossier §3.4 *and* the team-timeline constraint above, these are **not*
 - `.cursor/commands/example.md` — slash-command template (kebab-case, no frontmatter, English).
 - `.cursorignore` — Unity excludes (`Library/`, `Temp/`, `Logs/`, build outputs, IDE files, addressables artifacts, `.DS_Store`).
 - `.gitignore` — Unity + XR Interaction Toolkit standard, already in place.
+
+## Project Claude Code layer (`.claude/`)
+
+Committed, team-shared Claude Code config — all three devs and `claude-review.yml` get it.
+Intentionally small and curated (anchored to real Ankhora needs), with `CLAUDE.md` +
+`.cursor/rules/*.mdc` as the single source of truth; `.claude/` files stay thin and point
+back here rather than restating conventions. See `.claude/README.md` for the full inventory
+and the command/skill/agent distinction, and **`docs/05-operations/using-claude-code.md`** for
+the pro playbook (the full feature flow, context/permission discipline, and tips). It adds **no**
+new MCP server — everything runs over the existing official `unity-mcp` relay (`Unity_*` +
+`meta_*`); we deliberately did not adopt a second Unity-control bridge.
+
+The roster covers Ankhora's domains and the agents **compose into teams**
+(requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` — set it in your shell profile, or commit a
+`.claude/settings.json` `env` block to enable it repo-wide). Full inventory + the team-composition diagram
++ roadmap live in `.claude/README.md`. Summary:
+
+- **Commands (4)** (`.claude/commands/`): `/build-android` (Quest APK, Unity 6, Mac reality),
+  `/write-adr`, plus `/add-feature` and `/mirror-epitech` (thin pointers to the canonical
+  `.cursor/commands/*` so Cursor and Claude don't drift).
+- **Skills (10)** (`.claude/skills/`): `new-xr-interaction`, `spatial-anchors`, `passthrough-mr`,
+  `voice-spatial-audio`, `record-replay-contract` (the core data model — the spine),
+  `world-space-annotations`, `xr-ui-design` (visionOS/Meta Spatial design language),
+  `urp-shadergraph`, `unity-testability`, plus the shared `git-commit` workflow skill (promoted
+  to project scope so all collaborators get the Conventional Commits practice). Every XR skill
+  tells Claude to confirm exact Meta API signatures via context7/Meta docs before coding
+  (anti-hallucination).
+- **Agents (7)** (`.claude/agents/`): `masterclass-author` (team lead — composes the others),
+  `xr-scene-builder`, `xr-ui-builder`, `unity-test-author`, `quest-perf-reviewer` (read-only),
+  `horizon-store-compliance` (read-only), `xr-build-doctor`.
+- **Canonical team:** `masterclass-author` → `unity-test-author` (logic+tests first) →
+  `xr-scene-builder` + `xr-ui-builder` → `quest-perf-reviewer` + `horizon-store-compliance`.
+
+> Parity note: `.cursor/commands/build-android.md` and `.claude/commands/build-android.md` are
+> both current (Unity 6 `6000.4.10f1`). Keep them in sync when the build pipeline changes.
 
 ## Living document
 

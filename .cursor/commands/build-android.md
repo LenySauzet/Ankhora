@@ -14,12 +14,12 @@ Ask only if the user did not specify these after `/build-android`.
 When the user invokes `/build-android`:
 
 1. Verify prerequisites in this order, abort with a clear error if any fails:
-   - `Packages/manifest.json` contains an OpenXR plugin (the project is not yet wired before the first Meta XR SDK install — surface that explicitly).
+   - `Packages/manifest.json` contains `com.unity.xr.openxr` and `com.meta.xr.sdk.all` (the XR stack is wired since the Unity 6 migration). The Quest APK is built locally on device, never in CI; on Mac there is no Quest Link (Build & Run / Meta XR Simulator).
    - `adb` is on PATH (`which adb`).
    - If `install=yes`, `adb devices` lists at least one device whose state is `device` (not `unauthorized` or `offline`).
 2. Resolve Unity's command-line path on the current machine:
-   - macOS: `/Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/MacOS/Unity`
-   - Windows: `C:\Program Files\Unity\Hub\Editor\2022.3.62f3\Editor\Unity.exe`
+   - macOS: `/Applications/Unity/Hub/Editor/6000.4.10f1/Unity.app/Contents/MacOS/Unity`
+   - Windows: `C:\Program Files\Unity\Hub\Editor\6000.4.10f1\Editor\Unity.exe`
    - Use `~/Applications/...` fallback on macOS if the system path is missing.
 3. Build via Unity in batchmode using the project's build script:
    ```

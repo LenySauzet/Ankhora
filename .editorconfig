@@ -1,0 +1,84 @@
+# EditorConfig for Ankhora — https://editorconfig.org
+# Single source of truth for formatting across 3 devs on 2 OSes (macOS + Windows).
+# Mirrors the conventions documented in .cursor/rules/001-unity-conventions.mdc and CLAUDE.md.
+# Document-grade only: no csharpier / pre-commit enforcement is wired (by design).
+
+root = true
+
+# --- All files ---------------------------------------------------------------
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# --- Unity-serialized assets (YAML/JSON) -------------------------------------
+# Unity owns the formatting of these. Never let an editor reformat them, and do
+# not trim trailing whitespace (can be meaningful in serialized YAML).
+[*.{unity,prefab,asset,mat,anim,controller,physicMaterial,asmdef,asmref,meta}]
+indent_size = 2
+trim_trailing_whitespace = false
+
+# --- Markdown ----------------------------------------------------------------
+[*.md]
+trim_trailing_whitespace = false  # preserve hard line breaks
+
+# --- C# ----------------------------------------------------------------------
+[*.cs]
+indent_size = 4
+
+# this. qualification — not required (Unity/Microsoft default)
+dotnet_style_qualification_for_field = false:suggestion
+dotnet_style_qualification_for_property = false:suggestion
+dotnet_style_qualification_for_method = false:suggestion
+dotnet_style_qualification_for_event = false:suggestion
+
+# Language keywords over BCL type names (int over Int32)
+dotnet_style_predefined_type_for_locals_parameters_members = true:suggestion
+dotnet_style_predefined_type_for_member_access = true:suggestion
+
+# Expression preferences
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_prefer_braces = true:suggestion
+csharp_new_line_before_open_brace = all   # Allman braces (Unity default)
+
+# Namespace can match folder structure but is not enforced here.
+dotnet_style_namespace_match_folder = false
+
+# --- C# naming: Unity conventions --------------------------------------------
+# Types / methods / properties / events -> PascalCase
+dotnet_naming_rule.types_and_members_pascal.severity = suggestion
+dotnet_naming_rule.types_and_members_pascal.symbols = types_and_members
+dotnet_naming_rule.types_and_members_pascal.style = pascal_case
+dotnet_naming_symbols.types_and_members.applicable_kinds = class,struct,enum,interface,delegate,method,property,event
+dotnet_naming_symbols.types_and_members.applicable_accessibilities = *
+
+# Interfaces -> IPascalCase
+dotnet_naming_rule.interfaces_prefixed.severity = suggestion
+dotnet_naming_rule.interfaces_prefixed.symbols = interfaces
+dotnet_naming_rule.interfaces_prefixed.style = i_pascal_case
+dotnet_naming_symbols.interfaces.applicable_kinds = interface
+
+# Constants -> PascalCase
+dotnet_naming_rule.constants_pascal.severity = suggestion
+dotnet_naming_rule.constants_pascal.symbols = constants
+dotnet_naming_rule.constants_pascal.style = pascal_case
+dotnet_naming_symbols.constants.applicable_kinds = field
+dotnet_naming_symbols.constants.required_modifiers = const
+
+# Private / internal fields -> camelCase (CLAUDE.md: "camelCase fields";
+# prefer [SerializeField] private over public fields for inspector exposure).
+dotnet_naming_rule.private_fields_camel.severity = suggestion
+dotnet_naming_rule.private_fields_camel.symbols = private_fields
+dotnet_naming_rule.private_fields_camel.style = camel_case
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private,internal,protected,protected_internal,private_protected
+
+# Styles
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+dotnet_naming_style.camel_case.capitalization = camel_case
+dotnet_naming_style.i_pascal_case.capitalization = pascal_case
+dotnet_naming_style.i_pascal_case.required_prefix = I
