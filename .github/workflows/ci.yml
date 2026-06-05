@@ -1,7 +1,18 @@
-name: CI — Unity build verify
+name: CI — Unity compile & EditMode tests
 
 # Runs on every PR targeting main and on every push to main.
-# Build target = Android (Quest 3 standalone). Runners = ubuntu-latest (GameCI Linux container handles the Android build chain).
+#
+# IMPORTANT — why this does NOT build the Quest APK:
+#   Meta XR SDK 201.0.0's OVRProjectConfig static constructor throws on Linux during
+#   BuildPlayer (the OVRPlugin native lib does not load on a headless Linux editor, so
+#   OVRPlugin.wrapperVersion is null and the SDK computes Enumerable.Range with a negative
+#   count -> ArgumentOutOfRangeException -> TypeInitializationException). This is a Meta SDK
+#   bug, unfixable project-side, and deterministic on GameCI's Linux runner. 201.0.0 is the
+#   latest published SDK, so there is no patched version to move to.
+#   CI therefore verifies the project COMPILES and runs EditMode tests instead. The real
+#   Quest APK is built locally on device (Windows teammates via Quest Link; Mac via Build &
+#   Run). Re-introduce an APK build — e.g. on a Windows runner, where OVRPlugin loads — if and
+#   when Meta fixes the Linux editor path. See docs/05-operations/setup-unity6-claude-integration.md.
 #
 # Required GitHub secrets (Unity Student / Plus / Pro license with visible serial):
 #   UNITY_EMAIL     — Unity ID email
@@ -21,19 +32,19 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# NOTE: pinned to 6000.4.8f1 (not the project's 6000.4.10f1) because GameCI has
-# not yet published a Docker image for 6000.4.10f1. Same minor stream (6000.4),
-# so Unity opens the project with only a patch-version warning. Bump to match the
-# project once unityci/editor:ubuntu-6000.4.10f1-android exists.
+# Pinned to 6000.4.8f1 (not the project's 6000.4.10f1) because GameCI has not yet published a
+# Docker image for 6000.4.10f1. Same minor stream (6000.4); the editor opens the project with
+# only a patch-version warning. Bump to match the project once the 6000.4.10f1 image exists.
 env:
   UNITY_VERSION: 6000.4.8f1
 
 jobs:
-  build-android:
-    name: Build Quest APK (Android, IL2CPP, ARM64)
+  test:
+    name: Compile & EditMode tests
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      checks: write
     steps:
       - uses: actions/checkout@v6
         with:
@@ -49,25 +60,24 @@ jobs:
             Library-${{ runner.os }}-${{ env.UNITY_VERSION }}-
             Library-${{ runner.os }}-
 
-      - name: Build for Android (Quest 3)
-        uses: game-ci/unity-builder@v5
+      - name: EditMode tests (compiles the whole project)
+        uses: game-ci/unity-test-runner@v4
         env:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
         with:
           unityVersion: ${{ env.UNITY_VERSION }}
-          targetPlatform: Android
-          androidTargetSdkVersion: AndroidApiLevel33
-          androidExportType: androidPackage
-          allowDirtyBuild: false
-          buildName: Ankhora
+          testMode: EditMode
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          artifactsPath: test-results
+          checkName: EditMode test results
 
-      - name: Upload APK artifact
+      - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: Ankhora-Android-${{ github.sha }}
-          path: build/Android
+          name: EditMode-test-results
+          path: test-results
           if-no-files-found: warn
           retention-days: 7
