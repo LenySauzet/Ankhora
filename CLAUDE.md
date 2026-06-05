@@ -86,9 +86,10 @@ How the transport works (per-OS, per-user — **not** committed as a project `.m
 
 ## What "build" / "run" / "test" mean today
 
-- **Build**: XR packages (Meta XR SDK + OpenXR) are now installed, but a full Quest APK build has **not yet been verified end-to-end** on the Mac station. Still to confirm before claiming "build works": Android Build Support module installed in the Unity 6 Editor, platform switched to Android, OpenXR/Meta feature groups enabled for Android, IL2CPP + ARM64. CI (`ci.yml`) builds the APK via GameCI on push.
+- **Build**: XR packages (Meta XR SDK + OpenXR) are now installed, but a full Quest APK build has **not yet been verified end-to-end** on the Mac station. Still to confirm before claiming "build works": Android Build Support module installed in the Unity 6 Editor, platform switched to Android, OpenXR/Meta feature groups enabled for Android, IL2CPP + ARM64. **The Quest APK is built locally on device, NOT in CI** — see the next point.
+- **CI does not build the APK.** Meta XR SDK 201.0.0's `OVRProjectConfig` static ctor throws on a headless Linux editor (OVRPlugin reports no version → `Enumerable.Range(200, 60-200+1)` has a negative count → `ArgumentOutOfRangeException` during `BuildPlayer`). It is a Meta SDK bug, deterministic on GameCI's Linux runner, unfixable project-side, and 201.0.0 is the latest published SDK. So `ci.yml` runs **`unity-test-runner` (EditMode)** instead — it compiles the whole project and runs tests without `BuildPlayer`. The same cctor exception still spams the CI log but is non-fatal there. Reintroduce an APK build on a **Windows** runner (where OVRPlugin loads) if/when Meta fixes the Linux path.
 - **Run on device**: once a local build succeeds, the loop is `adb install path/to/build.apk` over USB (Mac & Windows).
-- **Test**: `com.unity.test-framework` `1.6.0` is in the manifest but no test scripts exist yet. Runtime tests will live under `Assets/Tests/` when added.
+- **Test**: `com.unity.test-framework` `1.6.0` is in the manifest. EditMode tests live under `Assets/Tests/EditMode/` (currently a single smoke test that gates compilation in CI). Add real coverage there as gameplay code lands.
 
 Replace the build/run lines with concrete, verified commands once a Quest APK has been built and sideloaded successfully.
 
