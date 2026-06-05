@@ -147,5 +147,4 @@
 .github/        export-ignore
 .cursor/        export-ignore
 research/       export-ignore
-docs/08-research/ export-ignore
 *.md            export-ignore
