@@ -121,9 +121,10 @@ Committed, team-shared Claude Code config — all three devs and `claude-review.
 Intentionally small and curated (anchored to real Ankhora needs), with `CLAUDE.md` +
 `.cursor/rules/*.mdc` as the single source of truth; `.claude/` files stay thin and point
 back here rather than restating conventions. See `.claude/README.md` for the full inventory
-and the command/skill/agent distinction. It adds **no** new MCP server — everything runs over
-the existing official `unity-mcp` relay (`Unity_*` + `meta_*`); we deliberately did not adopt
-a second Unity-control bridge.
+and the command/skill/agent distinction, and **`docs/05-operations/using-claude-code.md`** for
+the pro playbook (the full feature flow, context/permission discipline, and tips). It adds **no**
+new MCP server — everything runs over the existing official `unity-mcp` relay (`Unity_*` +
+`meta_*`); we deliberately did not adopt a second Unity-control bridge.
 
 The roster covers Ankhora's domains and the agents **compose into teams**
 (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` is on). Full inventory + the team-composition diagram
