@@ -127,7 +127,8 @@ new MCP server — everything runs over the existing official `unity-mcp` relay 
 `meta_*`); we deliberately did not adopt a second Unity-control bridge.
 
 The roster covers Ankhora's domains and the agents **compose into teams**
-(`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` is on). Full inventory + the team-composition diagram
+(requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` — set it in your shell profile, or commit a
+`.claude/settings.json` `env` block to enable it repo-wide). Full inventory + the team-composition diagram
 + roadmap live in `.claude/README.md`. Summary:
 
 - **Commands (4)** (`.claude/commands/`): `/build-android` (Quest APK, Unity 6, Mac reality),

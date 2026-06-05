@@ -17,7 +17,9 @@ the project template. ADRs are how Ankhora records decisions of consequence
 3. Derive the slug: lowercase the title, spaces → `-`, strip punctuation.
 4. Copy `docs/02-architecture/adr/0000-adr-template.md` to
    `docs/02-architecture/adr/<NNNN>-<slug>.md`.
-5. Fill what you can confidently from the conversation and the repo:
+5. Fill **every** template section — Status, Date, Deciders, Tags, Context, Decision drivers,
+   Considered options, Decision, Consequences, Links — leaving a visible `<TODO>` for anything
+   you cannot source. Draft from the conversation and the repo:
    - **Status:** `Proposed` unless the user says the decision is already made (`Accepted`).
    - **Date:** today (`date +%F`).
    - **Context, drivers, options, decision, consequences:** draft from the discussion.

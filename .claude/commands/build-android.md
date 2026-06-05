@@ -35,7 +35,7 @@ Ask only for tokens the user did not provide.
    - Fall back to `~/Applications/...` on macOS if the system path is missing.
    - If the resolved editor is missing, stop and tell the user to install `6000.4.10f1` via Unity Hub.
 3. **Build** in batchmode:
-   ```
+   ```bash
    "<UnityPath>" -batchmode -quit -nographics \
      -projectPath . \
      -buildTarget Android \

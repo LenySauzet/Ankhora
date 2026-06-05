@@ -5,7 +5,7 @@ description: Use when authoring or editing a shader/material for Ankhora's three
 
 # URP Shader Graph (Ankhora)
 
-Ankhora renders on **URP 17.4.0** on a **Quest 3** (mobile GPU, target 72+ FPS,
+Ankhora renders on **URP 17.4.0** on a **Quest 3** (mobile GPU, target 90 Hz,
 tile-based, fill-rate bound — see `@.cursor/rules/004-vr-performance.mdc`). Shaders are
 **not** a generic playground here: there are exactly three visual needs in the MVP/V1.
 Build for those; do not add shader complexity the masterclass does not require.

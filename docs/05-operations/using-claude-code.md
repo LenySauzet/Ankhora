@@ -99,8 +99,9 @@ you dispatch deliberately (or the lead composes them). **Commands** you type as 
 
 Canonical team for a feature:
 `masterclass-author` → `unity-test-author` → `xr-scene-builder` + `xr-ui-builder` →
-`quest-perf-reviewer` + `horizon-store-compliance`. Agent teams are enabled
-(`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`).
+`quest-perf-reviewer` + `horizon-store-compliance`. **Agent teams require activation:** set
+`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` in your shell profile, or commit a `.claude/settings.json`
+with an `env` block to enable it repo-wide. Without it, `masterclass-author` runs solo.
 
 ---
 
@@ -205,8 +206,8 @@ until a check passes, or a `/goal` condition re-checked every turn. Use these wh
   collide. Good for working two features at once.
 - **Headless** — `claude -p "..."` for scripts/CI; `--output-format json` / `stream-json --verbose`
   for parseable output. This is how `claude-review.yml` runs.
-- **Parallel agents** — for 2+ independent tasks, dispatch them concurrently (our agents, or the
-  superpowers `dispatching-parallel-agents` skill).
+- **Parallel agents** — for 2+ independent tasks, dispatch them concurrently (our agents, or — with the
+  superpowers plugin — its `dispatching-parallel-agents` skill).
 
 ---
 
