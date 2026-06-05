@@ -105,6 +105,13 @@
       },
       "hash": "31efec938c3ed5b1109284d175f0bd33ed35936f"
     },
+    "com.microsoft.mrtk.graphicstools.unity": {
+      "version": "https://github.com/microsoft/MixedReality-GraphicsTools-Unity.git?path=/com.microsoft.mrtk.graphicstools.unity#v0.8.0",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "1e4ff5dd9cd8d4df317ec63d08072defb4d0295a"
+    },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
       "depth": 1,
