@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What is Ankhora
 
-Ankhora is an XR platform for Meta Quest 3 that lets domain experts record immersive spatial "masterclasses" (voice + hand tracking + spatial anchors + annotations) and lets learners replay them as step-by-step guided training in MR. Target industries: manufacturing and culinary arts. A web-side RAG chatbot configurator and a marketplace are planned for V2.
+Ankhora is an XR platform for Meta Quest 3 that lets domain experts record immersive spatial "masterclasses" (voice + hand tracking + spatial pins/annotations, with on-object spatial anchoring as an MR step) and lets learners replay them as guided, chapter-by-chapter training in MR/VR. Domain-agnostic (manufacturing, culinary, repair, hobby skills). A web companion (model import + management) and a marketplace are planned for V2. **The MVP is VR-first** (see the product spec below).
 
 The project is currently in **spec / planning phase**. No feature code has been written yet, but the **dev environment is now wired**: the project has migrated to Unity 6, the Meta XR SDK is installed, and Claude Code is connected to the Unity Editor over MCP. See *Current technical state* and *AI tooling — Claude Code ↔ Unity (MCP)* below.
 
@@ -24,8 +24,12 @@ The project is currently in **spec / planning phase**. No feature code has been 
 Read these before any substantive work, in this order:
 
 1. **[research/xr-platform-master-research.md](research/xr-platform-master-research.md)** — the master research dossier (fact-checked May 2026, 33 sources, 19 verified claims, 6 explicitly refuted). Covers Mac → Quest 3 dev pipeline, Meta XR SDK choices and gotchas, MCP / AI tooling for Unity, spec-driven dev framework comparison, argued MVP / V2 split, and a 2-week setup plan. **This is the canonical knowledge base — defer to it on any XR / Unity / Quest 3 / tooling question.** The dossier was originally written assuming solo dev; the team & timeline constraints above override any solo-dev framing inside it (especially the MVP scope, which must shrink further).
-2. **[AGENTS.md](AGENTS.md)** — currently a stub. Cursor's `.cursor/rules/general.mdc` points to it as the canonical agent context. Keep AGENTS.md and CLAUDE.md aligned as content is added; the simplest pattern is to have AGENTS.md include a single line `Read @CLAUDE.md for project context.`
-3. **[README.md](README.md)** — one-line project description.
+2. **Product spec** (authored 2026-05-31 via a brainstorming session — the canonical *product* definition; defer to it for what we build and the words we use):
+   - **[docs/00-vision.md](docs/00-vision.md)** — long-term vision, conceptual model, ideal Instructor/Learner flows, architecture posture.
+   - **[docs/01-product/mvp-scope.md](docs/01-product/mvp-scope.md)** — the committed MVP (layered plan, feature scope, local data model, success criteria).
+   - **[docs/06-glossary.md](docs/06-glossary.md)** — the canonical vocabulary (Masterclass, Chapter, Stage, Track, Pin, Player, Passthrough…).
+3. **[AGENTS.md](AGENTS.md)** — currently a stub. Cursor's `.cursor/rules/general.mdc` points to it as the canonical agent context. Keep AGENTS.md and CLAUDE.md aligned as content is added; the simplest pattern is to have AGENTS.md include a single line `Read @CLAUDE.md for project context.`
+4. **[README.md](README.md)** — one-line project description.
 
 ## Current technical state
 
@@ -73,6 +77,7 @@ How the transport works (per-OS, per-user — **not** committed as a project `.m
 
 ## Conventions
 
+- **License**: **Apache-2.0** (`LICENSE` + `NOTICE` at repo root; authors in `AUTHORS`). Permissive with an explicit patent grant — chosen for the XR patent surface and to keep store distribution / a commercial V2 open. Copyright held by *The Ankhora Authors* (Allan Thamvongs, Lény Sauzet, Matthieu Julie). New source files don't need a per-file header for the MVP; if added later, use the standard Apache short header.
 - **Language**: all code, comments, file content, and agent output in **English**. (Source: `.cursor/commands/example.md`.) The team communicates in French; deliverables stay in English.
 - **C# style**: standard Unity conventions — `PascalCase` types, `camelCase` fields, `[SerializeField] private` preferred over public fields.
 - **Asset Serialization Mode**: Force Text (required for diffable scenes/prefabs in a 3-person team). Verify in `Edit > Project Settings > Editor`.
@@ -106,7 +111,7 @@ Per the dossier §3.4 *and* the team-timeline constraint above, these are **not*
 - Multi-industry customization layer
 - Cross-session anchor persistence at scale (multi-room, fleet-wide)
 
-**MVP candidate target (to confirm with the team)**: one short masterclass (≤ 2 min) recorded by an expert (voice + ghost hands + 1 text annotation + 1 spatial anchor), replayed by a learner. Distribution = side-loaded APK on the team's Quest 3.
+**MVP target** (full spec in [docs/01-product/mvp-scope.md](docs/01-product/mvp-scope.md)): a **VR** (Model Stage) masterclass of 1–2 short chapters — an expert records voice + ghost hands in one take and places a Text Pin + an Image Pin; a learner replays it in the Player (scrub / slow-motion / loop / recenter) with a **Passthrough** toggle, and marks chapters complete. **No spatial anchors, no backend, no accounts in the MVP** — those are V2. Distribution = side-loaded APK on the team's Quest 3.
 
 ## Cursor configuration
 
