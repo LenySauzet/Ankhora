@@ -4,7 +4,7 @@
 > [`../00-vision.md`](../00-vision.md); for terminology see
 > [`../06-glossary.md`](../06-glossary.md).
 >
-> *Last updated: 2026-05-31*
+> *Last updated: 2026-06-05*
 
 ## Goal of the MVP
 
@@ -98,10 +98,14 @@ recording, images). This local format is the same one a V2 backend will sync.
 
 ## Technical baseline
 
-- Unity `2022.3.62f3` LTS, URP `14.0.12`.
-- Meta XR SDK (All-in-One); Building Blocks + Project Setup Tool preferred over manual
-  rigging; hand-tracking interactions through Meta's Interaction SDK.
-- Quest 3, IL2CPP / ARM64 / Vulkan; distribution = side-loaded APK.
+- Unity 6 `6000.4.10f1`, URP `17.4.0` (migrated in place from `2022.3.62f3` / URP `14.0.12`).
+- Meta XR SDK All-in-One `201.0.0`, OpenXR `1.17.1`; Building Blocks + Project Setup Tool
+  preferred over manual rigging; hand-tracking interactions through Meta's Interaction SDK.
+- Quest 3, IL2CPP / ARM64, graphics API **Vulkan** (primary) with GLES3 fallback;
+  distribution = side-loaded APK.
+- **CI does not build the APK** (Meta SDK 201.0.0's `OVRProjectConfig` cctor throws on the
+  headless Linux runner); CI runs the EditMode test-runner instead. The Quest APK is built
+  locally on device — see [`CLAUDE.md`](../../CLAUDE.md) "What build / run / test mean today".
 
 ### Known constraints (context, not task allocation)
 
