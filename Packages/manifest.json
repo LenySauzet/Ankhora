@@ -2,7 +2,6 @@
   "dependencies": {
     "com.meta.xr.sdk.all": "201.0.0",
     "com.meta.xr.unity-mcp.extension": "https://github.com/meta-quest/Unity-MCP-Extensions.git#31efec938c3ed5b1109284d175f0bd33ed35936f",
-    "com.microsoft.mrtk.graphicstools.unity": "https://github.com/microsoft/MixedReality-GraphicsTools-Unity.git?path=/com.microsoft.mrtk.graphicstools.unity#v0.8.0",
     "com.unity.ai.assistant": "2.10.0-pre.1",
     "com.unity.collab-proxy": "2.12.4",
     "com.unity.ide.rider": "3.0.40",
