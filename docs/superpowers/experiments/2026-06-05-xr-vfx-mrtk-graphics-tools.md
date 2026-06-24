@@ -48,7 +48,28 @@ URP 17.4 makes Meta SDK 201 work but breaks MRTK. **They cannot coexist in one p
 This also retroactively explains the 6000.4 migration: it is **required** by Meta SDK
 201.0.0, not merely convenient for the Claude/Unity integration.
 
+### Refined analysis (official docs, 2026-06-06)
+
+A deep read of the MRTK docs sharpened the picture (full detail in
+[ADR-0002](../../02-architecture/adr/0002-no-mrtk-graphics-tools.md)):
+
+- Graphics Tools is **standalone** (MIT, URP-supported, no MRTK dependency) and composes
+  cleanly with the Meta XR Interaction SDK — adopting it would **not** pull MRTK input/UX.
+- **Only Acrylic is render-feature-based** (a fullscreen blur). It is the sole reason the
+  package fails to compile on URP 17.4. Everything else — Standard shader, hover/proximity
+  lights, clipping, mesh outlines (object-level pass), Unity UI plates — is
+  shader/`MonoBehaviour` and is Render-Graph-agnostic.
+- So an **embed + trim** (delete Acrylic) *would* make the rest usable on URP 17.4 — but
+  that means maintaining a forked, dormant Microsoft package, and the Fluent design language
+  diverges from Ankhora's visionOS/Meta Spatial UI direction.
+- The **rest of MRTK3** (Input/UX/Spatial Manipulation) is built on XRI and **would
+  conflict** with the Meta Interaction SDK — not adopted.
+
 ### Decision
+
+The formal decision is recorded in
+[**ADR-0002**](../../02-architecture/adr/0002-no-mrtk-graphics-tools.md): **do not adopt
+MRTK Graphics Tools; author Ankhora's VFX in URP Shader Graph.** In short:
 
 - **MRTK Graphics Tools is removed from Ankhora** (commit after the snapshot `127f961`).
   Ankhora stays on `6000.4.10f1` with Meta SDK 201 and URP 17.4.
@@ -56,4 +77,4 @@ This also retroactively explains the 6000.4 migration: it is **required** by Met
   URP, MRTK GT `v0.8.0`, no Meta SDK needed — the VFX are Graphics Tools shaders).
 - **Keeper effects return to Ankhora re-authored in URP Shader Graph** (skill
   [`urp-shadergraph`](../../../.claude/skills/urp-shadergraph/SKILL.md)), cost-checked for
-  Quest 3 — exactly the reconciliation this doc's Caveat already called for.
+  Quest 3 — or via a targeted embed+trim if a specific effect justifies it.
