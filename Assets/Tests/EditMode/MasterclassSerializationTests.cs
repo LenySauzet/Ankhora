@@ -118,5 +118,37 @@ namespace Ankhora.Tests.EditMode
             Assert.That(rp.pose.position.x, Is.EqualTo(4f).Within(1e-4f));
             Assert.That(rp.timeRange.end, Is.EqualTo(1.9f).Within(1e-4f));
         }
+
+        [Test]
+        public void RoundTrip_PreservesHandPoseRootAndBoneRotations()
+        {
+            var mc = new Masterclass { schemaVersion = Masterclass.CurrentSchemaVersion, id = "mc", title = "T" };
+            var ch = new Chapter { id = "c" };
+            ch.timeline.durationSeconds = 1f;
+            ch.timeline.frames.Add(new PoseFrame
+            {
+                t = 0f,
+                head = new Pose(Vector3.zero, Quaternion.identity),
+                leftHand = new HandPose
+                {
+                    root = new Pose(new Vector3(0.1f, 0.2f, 0.3f), Quaternion.Euler(0f, 90f, 0f)),
+                    boneRotations = new[]
+                    {
+                        Quaternion.identity,
+                        Quaternion.Euler(10f, 0f, 0f),
+                        Quaternion.Euler(0f, 0f, 45f),
+                    },
+                },
+            });
+            mc.chapters.Add(ch);
+
+            IMasterclassSerializer serializer = new JsonMasterclassSerializer();
+            Masterclass restored = serializer.Deserialize(serializer.Serialize(mc));
+
+            HandPose lh = restored.chapters[0].timeline.frames[0].leftHand;
+            Assert.AreEqual(3, lh.boneRotations.Length);
+            Assert.That(lh.root.position.y, Is.EqualTo(0.2f).Within(1e-4f));
+            Assert.That(Quaternion.Angle(lh.boneRotations[2], Quaternion.Euler(0f, 0f, 45f)), Is.LessThan(0.1f));
+        }
     }
 }

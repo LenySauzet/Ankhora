@@ -6,8 +6,7 @@ namespace Ankhora.Domain
     /// <summary>
     /// One sampled instant of the recording, on the Chapter's single monotonic clock.
     /// A value type: a 2-minute recording is many frames, and replay samples them in a hot
-    /// loop — keep it allocation-free. Hand poses are added in a later slice (after the
-    /// OVRSkeleton bone set is confirmed against the live Meta API).
+    /// loop — keep it allocation-free (the hand bone arrays are the only heap part).
     /// </summary>
     [Serializable]
     public struct PoseFrame
@@ -17,5 +16,11 @@ namespace Ankhora.Domain
 
         /// <summary>Head pose (position + rotation) at <see cref="t"/>.</summary>
         public Pose head;
+
+        /// <summary>Left hand at <see cref="t"/>; empty <c>boneRotations</c> means "not tracked".</summary>
+        public HandPose leftHand;
+
+        /// <summary>Right hand at <see cref="t"/>; empty <c>boneRotations</c> means "not tracked".</summary>
+        public HandPose rightHand;
     }
 }
