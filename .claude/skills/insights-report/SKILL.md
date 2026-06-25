@@ -75,8 +75,9 @@ ls docs/01-product/ docs/07-milestones.md                          # scope / mil
 
 ## 2. Compute KPIs & synthesise
 
-From the gathered numbers, fill the KPI cards and the four data series (commits/day,
-PRs/day, contribution, board status, CodeRabbit/PR). Then **reason over the artifacts** to
+From the gathered numbers, fill the KPI cards and the five chart series — commits/day (bar),
+PR burn-up cumulative (line/area), contribution by author (doughnut), board status
+(doughnut), CodeRabbit findings per PR (horizontal bar). Then **reason over the artifacts** to
 write the qualitative sections: executive summary, decisions & discoveries (read the ADRs
 and spike notes), what worked / what didn't, improvement ideas. Be honest and evidence-led;
 for contribution, broaden to all branches and add the bootstrap-phase context note (the
@@ -98,8 +99,8 @@ generic dashboard. Hold to it:
   --gold:#ffce6b; --red:#ff6478` on ink `#eef1ff` / muted `#9aa3c7`. Blue→cyan gradients for
   the wordmark and accents; teal = "worked", red = "didn't".
 - **Typography**: **Bricolage Grotesque** (800) for display/headings/KPI numerals — base64
-  woff2 inlined via `@font-face`; system sans for body; monospace for eyebrows/labels. No
-  Inter / Roboto / Space Groteske.
+  woff2 (`font-weight:700 800`) inlined via `@font-face`; system sans for body; monospace for
+  eyebrows/labels. No Inter / Roboto / Space Grotesk.
 - **Charts**: Chart.js, dark-tuned (`Chart.defaults.color='#9aa3c7'`, faint grid
   `rgba(255,255,255,.06)`, blue/cyan datasets, gradient fills on area charts).
 - **Feature-flow diagrams**: hand-authored inline `<svg>` (no lib) in the same palette —
@@ -150,8 +151,16 @@ report's `DATA` and narrative). It is a separate self-contained file, **horizont
   each `min-width:100vw;height:100vh`. One idea per slide, big Bricolage headings, generous
   space — slides, not a dense page.
 - **Navigation**: `←/→` (+ Space / PageUp-Down) scroll slide-to-slide, `Home`/`End` jump,
-  `F` toggles fullscreen; clickable progress **dots** + an `n / total` counter; a fixed
-  brandmark (logo + ANKHORA) top-right and a key-hint bottom-left.
+  `F` toggles fullscreen, `S` toggles **presenter notes**; clickable progress **dots** + an
+  `n / total` counter; a fixed brandmark (logo + ANKHORA) top-right and a key-hint
+  bottom-left.
+- **Presenter notes (`S`)**: a fixed bottom glass panel (`.presenter`, `body.notes-on`
+  reveals it) showing the current slide's speaker notes — `SLIDE n/total · short-title`, the
+  notes body, and a `→ next-title` hint. Notes live in a JS `NOTES` array (one `{t,n}` per
+  slide, `n` may contain `<b>`), and `upd()` refreshes the panel on every navigation. Write
+  the notes in **French** (the deck and the live talk are in French) — 1–3 sentences of *what
+  to say*, not a transcript: the hook, the one number to land, the thing to emphasise. They
+  are the single most useful presenter aid; keep them in sync with each slide's content.
 - **~9 slides** mirroring the report: ① title (logo + gradient wordmark + team/date),
   ② problem/vision statement, ③ KPI grid, ④ velocity (one burn-up chart), ⑤ the
   **record→replay flow SVG** (full-bleed), ⑥ the **S1→S8 pipeline SVG** + milestone band,
@@ -183,7 +192,8 @@ Then confirm each **renders** (Playwright blocks `file://`, so serve it):
 
 Navigate Playwright to `http://127.0.0.1:8765/insights-<today>.html` (screenshot full page)
 and `…/slides-<today>.html` (screenshot slide 1, then `←/→` through a chart slide and a flow
-slide to confirm nav + Chart.js + SVGs). Console must be clean apart from a `favicon.ico`
+slide to confirm nav + Chart.js + SVGs, and press `S` to confirm the presenter-notes panel
+reveals and tracks the current slide). Console must be clean apart from a `favicon.ico`
 404. Then `kill "$(cat /tmp/httpd.pid)"`, remove screenshots, and delete any
 `.playwright-mcp/` artifacts (`find … -type f -delete` then remove the empty dir — never
 `rm -rf`; the hook blocks it, and compound `find -delete … rmdir` chains also trip it, so run
