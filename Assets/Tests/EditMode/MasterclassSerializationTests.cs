@@ -43,5 +43,25 @@ namespace Ankhora.Tests.EditMode
             var ex = Assert.Throws<ArgumentException>(() => serializer.Deserialize(""));
             Assert.That(ex.Message, Does.Contain(nameof(JsonMasterclassSerializer)));
         }
+
+        [Test]
+        public void Deserialize_UnknownSchemaVersion_Throws()
+        {
+            IMasterclassSerializer serializer = new JsonMasterclassSerializer();
+            string fromTheFuture = "{\"schemaVersion\":999,\"id\":\"x\",\"title\":\"y\"}";
+
+            var ex = Assert.Throws<ArgumentException>(() => serializer.Deserialize(fromTheFuture));
+            Assert.That(ex.Message, Does.Contain("schemaVersion"));
+        }
+
+        [Test]
+        public void Deserialize_CurrentSchemaVersion_Succeeds()
+        {
+            IMasterclassSerializer serializer = new JsonMasterclassSerializer();
+            string current = $"{{\"schemaVersion\":{Masterclass.CurrentSchemaVersion},\"id\":\"x\",\"title\":\"y\"}}";
+
+            Masterclass restored = serializer.Deserialize(current);
+            Assert.AreEqual(Masterclass.CurrentSchemaVersion, restored.schemaVersion);
+        }
     }
 }

@@ -10,6 +10,9 @@ namespace Ankhora.Domain
     [Serializable]
     public class Masterclass
     {
+        /// <summary>The schema version this build writes and can read. Bump when the shape changes.</summary>
+        public const int CurrentSchemaVersion = 1;
+
         /// <summary>Format version of this persisted unit; drives migration. See the serializer.</summary>
         public int schemaVersion;
 
