@@ -1,4 +1,6 @@
-namespace Ankhora.Domain
+using Ankhora.Domain.Model;
+
+namespace Ankhora.Domain.Serialization
 {
     /// <summary>
     /// Serialises a <see cref="Masterclass"/> to/from a string payload. Behind an interface so

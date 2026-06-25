@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Ankhora.Domain
+namespace Ankhora.Domain.Model
 {
     public enum PinType
     {

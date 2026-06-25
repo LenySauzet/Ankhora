@@ -1,6 +1,6 @@
 using System;
 
-namespace Ankhora.Domain
+namespace Ankhora.Domain.Model
 {
     /// <summary>One ordered chapter of a masterclass: a single recorded take plus its pins.</summary>
     [Serializable]

@@ -1,5 +1,6 @@
 using System;
-using Ankhora.Domain;
+using Ankhora.Domain.Model;
+using Ankhora.Domain.Serialization;
 using NUnit.Framework;
 using UnityEngine;
 

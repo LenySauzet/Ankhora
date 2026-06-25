@@ -1,30 +1,24 @@
-using System;
-using System.Collections.Generic;
+using Ankhora.Domain.Model;
 using UnityEngine;
 
-namespace Ankhora.Domain
+namespace Ankhora.Domain.Sampling
 {
     /// <summary>
-    /// A Chapter's recorded timeline: head/hand pose frames sampled at a fixed rate on one
-    /// monotonic clock. Replay reads it via <see cref="Sample"/>, interpolating between frames
-    /// so ghost motion is smooth at any display rate.
+    /// Reads a <see cref="Timeline"/> at an arbitrary time, interpolating between the recorded
+    /// frames so ghost motion stays smooth at any display rate. Pure, deterministic, and
+    /// allocation-free (value-type frames + structs) so it is safe in the replay hot loop.
+    /// Kept off the <see cref="Timeline"/> DTO so the model layer stays strictly data.
     /// </summary>
-    [Serializable]
-    public class Timeline
+    public static class TimelineSampler
     {
-        public float durationSeconds;
-
-        public List<PoseFrame> frames = new List<PoseFrame>();
-
-        public List<Pin> pins = new List<Pin>();
-
         /// <summary>
-        /// Returns the pose at time <paramref name="t"/> (seconds), interpolating between the
-        /// two bracketing frames and clamping outside the recorded range. Allocation-free
-        /// (value-type frames + structs) so it is safe in the replay hot loop.
+        /// Returns the head pose at time <paramref name="t"/> (seconds): the exact frame pose at a
+        /// frame time, a linear/spherical interpolation between the two bracketing frames in
+        /// between, and the first/last frame pose when <paramref name="t"/> is outside the range.
         /// </summary>
-        public Pose Sample(float t)
+        public static Pose SampleHead(Timeline timeline, float t)
         {
+            var frames = timeline.frames;
             if (frames == null || frames.Count == 0)
                 return default;
 

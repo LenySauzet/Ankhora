@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Ankhora.Domain
+namespace Ankhora.Domain.Model
 {
     /// <summary>
     /// One sampled instant of the recording, on the Chapter's single monotonic clock.

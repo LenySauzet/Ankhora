@@ -1,11 +1,13 @@
 using System;
+using Ankhora.Domain.Model;
 using UnityEngine;
 
-namespace Ankhora.Domain
+namespace Ankhora.Domain.Serialization
 {
     /// <summary>
     /// JSON implementation of <see cref="IMasterclassSerializer"/>, backed by Unity's
     /// <see cref="JsonUtility"/> (works on the [Serializable] DTOs, no extra dependency).
+    /// Parses the payload defensively, then hands off versioning to <see cref="MasterclassMigrator"/>.
     /// </summary>
     public class JsonMasterclassSerializer : IMasterclassSerializer
     {
@@ -36,23 +38,7 @@ namespace Ankhora.Domain
                     $"[{nameof(JsonMasterclassSerializer)}] Payload deserialized to null (e.g. literal \"null\").",
                     nameof(payload));
 
-            return Migrate(result);
-        }
-
-        /// <summary>
-        /// Brings a deserialized masterclass up to <see cref="Masterclass.CurrentSchemaVersion"/>.
-        /// v1 is the only known schema today, so this is a pass-through; older versions get an
-        /// upgrade branch here as the format evolves, and unknown versions are rejected.
-        /// </summary>
-        private static Masterclass Migrate(Masterclass masterclass)
-        {
-            if (masterclass.schemaVersion == Masterclass.CurrentSchemaVersion)
-                return masterclass;
-
-            throw new ArgumentException(
-                $"[{nameof(JsonMasterclassSerializer)}] Unsupported schemaVersion {masterclass.schemaVersion} " +
-                $"(this build reads schemaVersion {Masterclass.CurrentSchemaVersion}).",
-                nameof(masterclass));
+            return MasterclassMigrator.Migrate(result);
         }
     }
 }

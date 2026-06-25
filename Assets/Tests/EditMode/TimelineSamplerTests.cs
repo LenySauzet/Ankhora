@@ -1,10 +1,11 @@
-using Ankhora.Domain;
+using Ankhora.Domain.Model;
+using Ankhora.Domain.Sampling;
 using NUnit.Framework;
 using UnityEngine;
 
 namespace Ankhora.Tests.EditMode
 {
-    public class TimelineSampleTests
+    public class TimelineSamplerTests
     {
         // Two frames 1s apart, head moving from x=0 to x=10 along a straight line.
         private static Timeline TwoFrames()
@@ -16,30 +17,30 @@ namespace Ankhora.Tests.EditMode
         }
 
         [Test]
-        public void Sample_AtFrameTime_ReturnsThatFramePose()
+        public void SampleHead_AtFrameTime_ReturnsThatFramePose()
         {
-            Pose pose = TwoFrames().Sample(1f);
+            Pose pose = TimelineSampler.SampleHead(TwoFrames(), 1f);
             Assert.That(pose.position.x, Is.EqualTo(10f).Within(1e-4f));
         }
 
         [Test]
-        public void Sample_BetweenFrames_InterpolatesPositionLinearly()
+        public void SampleHead_BetweenFrames_InterpolatesPositionLinearly()
         {
-            Pose pose = TwoFrames().Sample(0.5f);
+            Pose pose = TimelineSampler.SampleHead(TwoFrames(), 0.5f);
             Assert.That(pose.position.x, Is.EqualTo(5f).Within(1e-4f));
         }
 
         [Test]
-        public void Sample_BeforeFirstFrame_ClampsToFirst()
+        public void SampleHead_BeforeFirstFrame_ClampsToFirst()
         {
-            Pose pose = TwoFrames().Sample(-1f);
+            Pose pose = TimelineSampler.SampleHead(TwoFrames(), -1f);
             Assert.That(pose.position.x, Is.EqualTo(0f).Within(1e-4f));
         }
 
         [Test]
-        public void Sample_AfterLastFrame_ClampsToLast()
+        public void SampleHead_AfterLastFrame_ClampsToLast()
         {
-            Pose pose = TwoFrames().Sample(99f);
+            Pose pose = TimelineSampler.SampleHead(TwoFrames(), 99f);
             Assert.That(pose.position.x, Is.EqualTo(10f).Within(1e-4f));
         }
     }

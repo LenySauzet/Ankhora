@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Ankhora.Domain
+namespace Ankhora.Domain.Model
 {
     /// <summary>
     /// Root persisted unit: a time-ordered training recording the learner replays.

@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Ankhora.Domain
+namespace Ankhora.Domain.Model
 {
     /// <summary>
     /// One hand in one frame: a wrist <see cref="root"/> pose plus per-bone local rotations.
