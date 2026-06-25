@@ -138,3 +138,6 @@ InitTestScene*.unity*
 # Re-import from the Store; do not version (Nebula Skyboxes, Kevin Iglesias, etc.)
 /[Aa]ssets/AssetPacks/
 /[Aa]ssets/AssetPacks.meta
+
+# --- Android/IL2CPP build artifacts (regenerated per build, never ship) ---
+/*_BurstDebugInformation_DoNotShip/
