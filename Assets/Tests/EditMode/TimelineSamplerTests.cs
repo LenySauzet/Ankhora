@@ -45,6 +45,18 @@ namespace Ankhora.Tests.EditMode
         }
 
         [Test]
+        public void SampleHead_EmptyTimeline_ReturnsDefaultPose()
+        {
+            // No frames recorded yet: the sampler must not throw, it returns the default pose.
+            var empty = new Timeline { durationSeconds = 0f };
+
+            Pose pose = TimelineSampler.SampleHead(empty, 0.5f);
+
+            Assert.That(pose.position, Is.EqualTo(Vector3.zero));
+            Assert.That(pose.rotation, Is.EqualTo(default(Quaternion)));
+        }
+
+        [Test]
         public void SampleHead_SingleFrame_ReturnsThatFramePose()
         {
             var tl = new Timeline { durationSeconds = 0f };

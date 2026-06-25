@@ -1,11 +1,11 @@
 ---
-description: Unity 2022.3 LTS C# coding conventions and asset workflow for Ankhora
+description: Unity 6 C# coding conventions and asset workflow for Ankhora
 alwaysApply: true
 ---
 
 # Unity & C# conventions
 
-Unity Editor version is `2022.3.62f3` LTS. Do not upgrade or change it without an ADR under `docs/02-architecture/adr/`.
+Unity Editor version is `6000.4.10f1` (Unity 6) — see ADR-0001. Do not upgrade or change it without an ADR under `docs/02-architecture/adr/`.
 
 ## C# style
 
@@ -37,19 +37,28 @@ Unity Editor version is `2022.3.62f3` LTS. Do not upgrade or change it without a
 
 ## Scripts folder structure
 
+Feature-based layout with a shared `Domain` kernel — see **ADR-0003** (supersedes the earlier
+layer-based sketch) and `Assets/Scripts/CONTEXT.md`.
+
 ```
 Assets/
   Scripts/
-    Authoring/        # expert-side: recording flow
-    Playback/         # learner-side: replay flow
-    Domain/           # POCOs, value objects, no UnityEngine dependency
-    Infrastructure/   # serialization, file IO, networking
-    XR/               # XR-specific MonoBehaviours and helpers
-    UI/               # in-headset UI
-    Editor/           # editor-only tools (any folder named Editor is excluded from runtime build)
+    Domain/            # shared kernel (assembly Ankhora.Domain) — the record/replay spine
+      Model/           # data-only [Serializable] DTOs = the persisted contract (no MonoBehaviour)
+      Serialization/   # JsonMasterclassSerializer + MasterclassMigrator (schemaVersion upgrades)
+      Sampling/        # pure read logic over the model (TimelineSampler — interpolated playback)
+    Recording/  Replay/  Annotations/   # features (planned): each its own asmdef, depends on Domain
+    Editor/            # editor-only tools (any folder named Editor is excluded from runtime build)
     Tests/
       EditMode/
       PlayMode/
 ```
 
-Keep `Domain/` free of `UnityEngine` references — this enables unit-testable business logic.
+`Domain/` is **data-only and EditMode-testable without a headset** — no `MonoBehaviour`, no scene
+or `UnityEditor` dependencies, no per-frame engine lifecycle. It *may* use Unity value-math types
+(`Vector3`, `Quaternion`, `Pose`) and `JsonUtility`: these are batchmode-available math/serialisation
+structs, not scene dependencies, so the spine stays unit-testable while the recorder/replay code
+avoids a conversion layer. The persisted JSON is already engine-neutral (plain `{x,y,z,w}` numbers),
+so a future web companion reads it without Unity. An engine-agnostic POCO Domain (own `Vec3`/`Quat`)
+is a deliberate **non-goal for the MVP** (YAGNI); revisit only if a .NET service ever links the
+Domain assembly directly.

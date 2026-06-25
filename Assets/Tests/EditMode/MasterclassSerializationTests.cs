@@ -28,6 +28,16 @@ namespace Ankhora.Tests.EditMode
         }
 
         [Test]
+        public void Serialize_NullMasterclass_ThrowsWithContext()
+        {
+            IMasterclassSerializer serializer = new JsonMasterclassSerializer();
+
+            // Fail fast on a null input rather than emitting the literal "null" payload.
+            var ex = Assert.Throws<ArgumentNullException>(() => serializer.Serialize(null));
+            Assert.That(ex.Message, Does.Contain(nameof(JsonMasterclassSerializer)));
+        }
+
+        [Test]
         public void Deserialize_NullJsonLiteral_ThrowsWithContext()
         {
             IMasterclassSerializer serializer = new JsonMasterclassSerializer();

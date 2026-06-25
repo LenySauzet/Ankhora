@@ -11,7 +11,15 @@ namespace Ankhora.Domain.Serialization
     /// </summary>
     public class JsonMasterclassSerializer : IMasterclassSerializer
     {
-        public string Serialize(Masterclass masterclass) => JsonUtility.ToJson(masterclass);
+        public string Serialize(Masterclass masterclass)
+        {
+            if (masterclass == null)
+                throw new ArgumentNullException(
+                    nameof(masterclass),
+                    $"[{nameof(JsonMasterclassSerializer)}] Cannot serialize a null masterclass.");
+
+            return JsonUtility.ToJson(masterclass);
+        }
 
         public Masterclass Deserialize(string payload)
         {
