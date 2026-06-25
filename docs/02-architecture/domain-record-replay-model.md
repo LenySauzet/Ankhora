@@ -10,11 +10,10 @@
 Built TDD (`Unity -runTests` EditMode via CLI), each slice RED → GREEN → committed:
 
 - **Done** — `Masterclass` DTO + `IMasterclassSerializer` / `JsonMasterclassSerializer`
-  (round-trip); `PoseFrame` (struct) + `Timeline.Sample(t)` (clamp + Lerp/Slerp interpolation,
-  allocation-free).
-- **Next** — robust `Deserialize` (guard `null`/empty/malformed); `schemaVersion` migration
-  hook; nested `Chapter` / `Pin` round-trip; `HandPose` (after confirming the `OVRSkeleton` bone
-  set against the live Meta API).
+  (round-trip, robust `Deserialize` guard, `schemaVersion` migration hook); `PoseFrame` (struct)
+  + `Timeline.Sample(t)` (clamp + Lerp/Slerp interpolation, allocation-free). 10/10 EditMode tests.
+- **Next** — nested `Chapter` / `Pin` round-trip; `HandPose` (after confirming the `OVRSkeleton`
+  bone set against the live Meta API).
 
 ## Why
 
@@ -118,8 +117,8 @@ immutable and syncable — not split now (YAGNI for a local, single-device MVP).
 - [x] EditMode: `Timeline.Sample(t)` correct at frame boundaries and interpolated at midpoints.
 - [x] Serialiser sits behind an interface so the on-disk format can change in isolation.
 - [x] No allocation in the `Sample(t)` hot path (value-type frames; Profiler check when wired to replay).
-- [ ] `Deserialize` rejects `null`/empty/malformed payloads with a clear error (no silent `null`).
-- [ ] `schemaVersion` migration hook exists (no-op for v1; throws on unknown version).
+- [x] `Deserialize` rejects `null`/empty/malformed payloads with a clear error (no silent `null`).
+- [x] `schemaVersion` migration hook exists (no-op for v1; throws on unknown version).
 - [ ] EditMode: an old-`schemaVersion` fixture migrates (or is rejected with a clear error).
 - [ ] Nested `Chapter` / `Pin` round-trip preserved.
 - [ ] `HandPose` fields fixed against the confirmed `OVRSkeleton` bone set.
