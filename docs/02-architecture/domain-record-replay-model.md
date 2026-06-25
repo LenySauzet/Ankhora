@@ -9,11 +9,13 @@
 
 Built TDD (`Unity -runTests` EditMode via CLI), each slice RED → GREEN → committed:
 
-- **Done** — `Masterclass` DTO + `IMasterclassSerializer` / `JsonMasterclassSerializer`
-  (round-trip, robust `Deserialize` guard, `schemaVersion` migration hook); `PoseFrame` (struct)
-  + `Timeline.Sample(t)` (clamp + Lerp/Slerp interpolation, allocation-free). 10/10 EditMode tests.
-- **Next** — nested `Chapter` / `Pin` round-trip; `HandPose` (after confirming the `OVRSkeleton`
-  bone set against the live Meta API).
+- **Done (full model)** — `Masterclass` → `Chapter` → `Timeline` (frames + pins) → `PoseFrame`
+  (head + left/right `HandPose`); `IMasterclassSerializer` / `JsonMasterclassSerializer`
+  (round-trip, robust `Deserialize` guard, `schemaVersion` migration); `Timeline.Sample(t)`
+  (clamp + Lerp/Slerp, allocation-free). Hand set confirmed against Meta docs (OVRSkeleton 19
+  skinnable / OpenXR 26 joints) → `HandPose` is count-agnostic. **12/12 EditMode tests.**
+- **Next (separate follow-up features)** — capture (`recorder`); replay rendering + hand
+  interpolation in `Sample(t)` (`playback`); pin authoring UI (`ui`).
 
 ## Why
 
@@ -119,9 +121,11 @@ immutable and syncable — not split now (YAGNI for a local, single-device MVP).
 - [x] No allocation in the `Sample(t)` hot path (value-type frames; Profiler check when wired to replay).
 - [x] `Deserialize` rejects `null`/empty/malformed payloads with a clear error (no silent `null`).
 - [x] `schemaVersion` migration hook exists (no-op for v1; throws on unknown version).
-- [ ] EditMode: an old-`schemaVersion` fixture migrates (or is rejected with a clear error).
-- [ ] Nested `Chapter` / `Pin` round-trip preserved.
-- [ ] `HandPose` fields fixed against the confirmed `OVRSkeleton` bone set.
+- [x] EditMode: an unknown/future `schemaVersion` is rejected with a clear error (forward
+      migration of old fixtures is a no-op until a v2 exists).
+- [x] Nested `Chapter` / `Pin` round-trip preserved.
+- [x] `HandPose` fields fixed against the confirmed bone set (count-agnostic: OVRSkeleton 19 /
+      OpenXR 26 — the recorder picks the count).
 
 ## Out of scope
 
