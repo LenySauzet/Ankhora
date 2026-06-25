@@ -3,7 +3,8 @@
     "rootNamespace": "Ankhora.Tests.EditMode",
     "references": [
         "UnityEngine.TestRunner",
-        "UnityEditor.TestRunner"
+        "UnityEditor.TestRunner",
+        "Ankhora.Domain"
     ],
     "includePlatforms": [
         "Editor"
