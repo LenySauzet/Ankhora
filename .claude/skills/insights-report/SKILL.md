@@ -194,7 +194,18 @@ Navigate Playwright to `http://127.0.0.1:8765/insights-<today>.html` (screenshot
 and `…/slides-<today>.html` (screenshot slide 1, then `←/→` through a chart slide and a flow
 slide to confirm nav + Chart.js + SVGs, and press `S` to confirm the presenter-notes panel
 reveals and tracks the current slide). Console must be clean apart from a `favicon.ico`
-404. Then `kill "$(cat /tmp/httpd.pid)"`, remove screenshots, and delete any
+404.
+
+**Layout cleanliness (mandatory — nothing may overflow):** the deck is projected, so first
+`browser_resize` to **1920×1080**, then on *each* artifact run the check in
+[`check-overflow.js`](check-overflow.js) via `browser_evaluate` (paste the function). It
+returns counters that **must all be 0** (`ok:true`): `slideOverflow` (deck — anything leaving
+a slide), `hOverflow`/`pastViewport` (report — horizontal page overflow), `edgeTouchesBox` (a
+flow-diagram edge label sitting on a box instead of in the gap), and `textOverflowBox` (any
+SVG text spilling outside its box). If a counter is non-zero, the sample arrays name the
+offending text — fix the SVG coordinates (widen the gap / shorten the label so it fits its
+box or gap) and re-check until `ok:true`. The two flow SVGs are tuned to a 1040-unit viewBox:
+keep box widths + inter-box gaps large enough that every label fits. Then `kill "$(cat /tmp/httpd.pid)"`, remove screenshots, and delete any
 `.playwright-mcp/` artifacts (`find … -type f -delete` then remove the empty dir — never
 `rm -rf`; the hook blocks it, and compound `find -delete … rmdir` chains also trip it, so run
 them as separate commands).

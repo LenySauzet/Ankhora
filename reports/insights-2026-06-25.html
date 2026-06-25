@@ -198,50 +198,29 @@ code{font-family:var(--mono);font-size:.86em;background:rgba(255,255,255,.06);pa
     <div class="glass flowwrap">
       <div class="eyebrow" style="margin-bottom:6px">Le cœur d'Ankhora · « capturer une fois → rejouer à l'infini »</div>
       <svg class="flow" viewBox="0 0 1040 250" role="img" aria-label="Boucle record-replay">
-        <defs>
-          <linearGradient id="gnode" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="rgba(255,255,255,.10)"/><stop offset="1" stop-color="rgba(255,255,255,.03)"/>
-          </linearGradient>
-          <linearGradient id="gpersona" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="rgba(83,80,255,.40)"/><stop offset="1" stop-color="rgba(83,80,255,.12)"/>
-          </linearGradient>
-          <marker id="arr" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
-            <path d="M0 0L9 4.5L0 9z" fill="#7e7bff"/>
-          </marker>
-        </defs>
-        <rect x="6" y="86" rx="16" width="120" height="78" fill="url(#gpersona)" stroke="rgba(125,123,255,.6)"/>
-        <text class="lbl" x="66" y="120" text-anchor="middle">Instructor</text>
-        <text class="sub" x="66" y="138" text-anchor="middle">l'expert</text>
-        <rect x="180" y="74" rx="14" width="180" height="102" fill="url(#gnode)" stroke="rgba(125,123,255,.45)"/>
-        <text class="stp" x="196" y="98">RECORD · une prise</text>
-        <text class="lbl" x="196" y="122">Voix + Mains</text>
-        <text class="sub" x="196" y="140">capturées ensemble,</text>
-        <text class="sub" x="196" y="154">+ Pins texte / image</text>
-        <rect x="420" y="74" rx="14" width="190" height="102" fill="url(#gnode)" stroke="rgba(125,123,255,.45)"/>
-        <text class="stp" x="436" y="98">MASTERCLASS · local</text>
-        <text class="lbl" x="436" y="122">Manifest JSON</text>
-        <text class="sub" x="436" y="140">+ blobs (audio, poses</text>
-        <text class="sub" x="436" y="154">mains, images)</text>
-        <rect x="670" y="74" rx="14" width="190" height="102" fill="url(#gnode)" stroke="rgba(125,123,255,.45)"/>
-        <text class="stp" x="686" y="98">PLAYER · replay</text>
-        <text class="lbl" x="686" y="122">Mains fantômes</text>
-        <text class="sub" x="686" y="140">+ voix synchro + pins,</text>
-        <text class="sub" x="686" y="154">scrub · slow-mo · loop</text>
-        <rect x="916" y="86" rx="16" width="118" height="78" fill="url(#gpersona)" stroke="rgba(125,123,255,.6)"/>
-        <text class="lbl" x="975" y="120" text-anchor="middle">Learner</text>
-        <text class="sub" x="975" y="138" text-anchor="middle">l'apprenant</text>
-        <line x1="126" y1="125" x2="176" y2="125" stroke="#7e7bff" stroke-width="1.6" marker-end="url(#arr)"/>
-        <text class="edge" x="151" y="116" text-anchor="middle">record</text>
-        <line x1="360" y1="125" x2="416" y2="125" stroke="#7e7bff" stroke-width="1.6" marker-end="url(#arr)"/>
-        <text class="edge" x="388" y="116" text-anchor="middle">sérialise</text>
-        <line x1="610" y1="125" x2="666" y2="125" stroke="#7e7bff" stroke-width="1.6" marker-end="url(#arr)"/>
-        <text class="edge" x="638" y="116" text-anchor="middle">charge</text>
-        <line x1="860" y1="125" x2="912" y2="125" stroke="#7e7bff" stroke-width="1.6" marker-end="url(#arr)"/>
-        <text class="edge" x="886" y="116" text-anchor="middle">apprend</text>
-        <rect x="670" y="196" rx="9" width="200" height="34" fill="rgba(56,214,255,.10)" stroke="rgba(56,214,255,.35)"/>
-        <text class="sub" x="686" y="217" fill="#9fe9ff">⟳ Passthrough VR ⇄ MR — toggle apprenant</text>
-        <line x1="765" y1="176" x2="765" y2="196" stroke="rgba(56,214,255,.5)" stroke-dasharray="3 3"/>
-      </svg>
+      <defs>
+        <linearGradient id="gnode" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(255,255,255,.10)"/><stop offset="1" stop-color="rgba(255,255,255,.03)"/></linearGradient>
+        <linearGradient id="gp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(83,80,255,.40)"/><stop offset="1" stop-color="rgba(83,80,255,.12)"/></linearGradient>
+        <marker id="arr" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9z" fill="#7e7bff"/></marker>
+      </defs>
+      <rect x="4" y="86" rx="16" width="112" height="78" fill="url(#gp)" stroke="rgba(125,123,255,.6)"/>
+      <text class="lbl" x="60" y="120" text-anchor="middle">Instructor</text><text class="sub" x="60" y="138" text-anchor="middle">l'expert</text>
+      <rect x="188" y="74" rx="14" width="164" height="102" fill="url(#gnode)" stroke="rgba(125,123,255,.45)"/>
+      <text class="stp" x="202" y="98">RECORD &#183; une prise</text><text class="lbl" x="202" y="122">Voix + Mains</text><text class="sub" x="202" y="140">ensemble, + Pins</text><text class="sub" x="202" y="156">texte / image</text>
+      <rect x="440" y="74" rx="14" width="170" height="102" fill="url(#gnode)" stroke="rgba(125,123,255,.45)"/>
+      <text class="stp" x="454" y="98">MASTERCLASS &#183; local</text><text class="lbl" x="454" y="122">Manifest JSON</text><text class="sub" x="454" y="140">+ blobs (audio,</text><text class="sub" x="454" y="156">poses, images)</text>
+      <rect x="688" y="74" rx="14" width="170" height="102" fill="url(#gnode)" stroke="rgba(125,123,255,.45)"/>
+      <text class="stp" x="702" y="98">PLAYER &#183; replay</text><text class="lbl" x="702" y="122">Mains fant&#244;mes</text><text class="sub" x="702" y="140">+ voix + pins,</text><text class="sub" x="702" y="156">scrub&#183;slow&#183;loop</text>
+      <rect x="930" y="86" rx="16" width="106" height="78" fill="url(#gp)" stroke="rgba(125,123,255,.6)"/>
+      <text class="lbl" x="983" y="120" text-anchor="middle">Learner</text><text class="sub" x="983" y="138" text-anchor="middle">l'apprenant</text>
+      <line x1="116" y1="125" x2="184" y2="125" stroke="#7e7bff" stroke-width="1.6" marker-end="url(#arr)"/><text class="edge" x="152" y="116" text-anchor="middle">record</text>
+      <line x1="352" y1="125" x2="436" y2="125" stroke="#7e7bff" stroke-width="1.6" marker-end="url(#arr)"/><text class="edge" x="396" y="116" text-anchor="middle">s&#233;rialise</text>
+      <line x1="610" y1="125" x2="684" y2="125" stroke="#7e7bff" stroke-width="1.6" marker-end="url(#arr)"/><text class="edge" x="649" y="116" text-anchor="middle">charge</text>
+      <line x1="858" y1="125" x2="926" y2="125" stroke="#7e7bff" stroke-width="1.6" marker-end="url(#arr)"/><text class="edge" x="894" y="116" text-anchor="middle">apprend</text>
+      <rect x="672" y="196" rx="9" width="190" height="34" fill="rgba(56,214,255,.10)" stroke="rgba(56,214,255,.35)"/>
+      <text class="sub" x="686" y="217" fill="#9fe9ff">&#10227; Passthrough VR &#8644; MR</text>
+      <line x1="767" y1="176" x2="767" y2="196" stroke="rgba(56,214,255,.5)" stroke-dasharray="3 3"/>
+    </svg>
       <div class="legend">
         <span><i style="background:var(--blue)"></i>Persona</span>
         <span><i style="background:rgba(255,255,255,.4)"></i>Étape applicative</span>
