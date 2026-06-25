@@ -51,7 +51,8 @@
           if (ix>eps && iy>eps){ edgeTouchesBox++; if(eS.length<8)eS.push({txt:(tx.textContent||'').trim().slice(0,16), overlapX:+ix.toFixed(1)}); break; } }
       } else {
         const host = boxes.find(b => cx>=b.left&&cx<=b.right&&cy>=b.top&&cy<=b.bottom);
-        if (host && (tr.left<host.left-eps || tr.right>host.right+eps)){ textOverflowBox++; if(tS.length<8)tS.push({txt:(tx.textContent||'').trim().slice(0,18), spillR:+(tr.right-host.right).toFixed(1)}); }
+        if (host && (tr.left<host.left-eps || tr.right>host.right+eps || tr.top<host.top-eps || tr.bottom>host.bottom+eps)){
+          textOverflowBox++; if(tS.length<8)tS.push({txt:(tx.textContent||'').trim().slice(0,18), spillR:+(tr.right-host.right).toFixed(1), spillB:+(tr.bottom-host.bottom).toFixed(1)}); }
       }
     });
   });

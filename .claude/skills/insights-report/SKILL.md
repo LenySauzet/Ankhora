@@ -114,8 +114,9 @@ generic dashboard. Hold to it:
 `/*__CHARTJS__*/` (Chart.js, once). Stage the asset files once:
 
 ```bash
-base64 -i reports/assets/ankhora-logo.png  -o /tmp/logo.b64     # may already exist
-# Bricolage Grotesque woff2 → /tmp/font.b64 (base64), Chart.js → /tmp/chart.min.js
+# base64 via python = portable (macOS BSD vs GNU coreutils differ on -i/-o and line wrapping)
+python3 -c "import base64;open('/tmp/logo.b64','w').write(base64.b64encode(open('reports/assets/ankhora-logo.png','rb').read()).decode())"
+# Bricolage Grotesque woff2 → /tmp/font.b64 the same way; Chart.js (plain JS) → /tmp/chart.min.js
 curl -fsSL "https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" -o /tmp/chart.min.js
 ```
 
@@ -132,10 +133,10 @@ markers left), just edit the data/prose. If you start from a marker skeleton, in
 python3 - <<'PY'
 r="reports/insights-<today>.html"
 h=open(r,encoding="utf-8").read()
-for m,p,n in [("__LOGO_B64__","/tmp/logo.b64",-1),("__FONT_B64__","/tmp/font.b64",1),
-              ("/*__CHARTJS__*/","/tmp/chart.min.js",1)]:
-    v=open(p,encoding="utf-8").read().strip()
-    h=h.replace(m,v) if n<0 else h.replace(m,v,n)
+b64=lambda p:"".join(open(p,encoding="utf-8").read().split())          # strip ALL whitespace (any wrapping)
+h=h.replace("__LOGO_B64__", b64("/tmp/logo.b64"))                      # logo may appear several times
+h=h.replace("__FONT_B64__", b64("/tmp/font.b64"), 1)
+h=h.replace("/*__CHARTJS__*/", open("/tmp/chart.min.js",encoding="utf-8").read(), 1)  # JS: keep verbatim
 open(r,"w",encoding="utf-8").write(h)
 PY
 ```
