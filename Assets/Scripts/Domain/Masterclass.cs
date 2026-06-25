@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Ankhora.Domain
 {
@@ -18,5 +19,8 @@ namespace Ankhora.Domain
 
         public string id;
         public string title;
+
+        /// <summary>Ordered chapters (use <see cref="Chapter.order"/> for the intended sequence).</summary>
+        public List<Chapter> chapters = new List<Chapter>();
     }
 }

@@ -16,6 +16,8 @@ namespace Ankhora.Domain
 
         public List<PoseFrame> frames = new List<PoseFrame>();
 
+        public List<Pin> pins = new List<Pin>();
+
         /// <summary>
         /// Returns the pose at time <paramref name="t"/> (seconds), interpolating between the
         /// two bracketing frames and clamping outside the recorded range. Allocation-free
