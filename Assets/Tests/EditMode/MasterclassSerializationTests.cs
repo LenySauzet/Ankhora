@@ -57,6 +57,41 @@ namespace Ankhora.Tests.EditMode
         }
 
         [Test]
+        public void RoundTrip_MasterclassCreatedInCode_DefaultsToCurrentSchemaVersion()
+        {
+            // The recorder builds a Masterclass in code without setting schemaVersion explicitly.
+            // It must already carry the current version (not an uninitialised 0 the migrator rejects).
+            var original = new Masterclass { id = "mc", title = "T" };
+            Assert.AreEqual(Masterclass.CurrentSchemaVersion, original.schemaVersion,
+                "A freshly constructed Masterclass should already carry the current schema version.");
+
+            IMasterclassSerializer serializer = new JsonMasterclassSerializer();
+            Masterclass restored = serializer.Deserialize(serializer.Serialize(original));
+
+            Assert.AreEqual(Masterclass.CurrentSchemaVersion, restored.schemaVersion);
+        }
+
+        [Test]
+        public void Serialize_HandPoseBoneRotations_AreWrittenToJson()
+        {
+            // Guard against JsonUtility silently dropping the nested Quaternion[] (array wrapped in
+            // HandPose struct inside PoseFrame struct). Per Unity's serialization rules a struct
+            // wrapper is the supported case; this asserts the field actually reaches the wire.
+            var mc = new Masterclass { id = "mc", title = "T" };
+            var ch = new Chapter { id = "c" };
+            ch.timeline.frames.Add(new PoseFrame
+            {
+                t = 0f,
+                leftHand = new HandPose { boneRotations = new[] { Quaternion.identity } },
+            });
+            mc.chapters.Add(ch);
+
+            string json = new JsonMasterclassSerializer().Serialize(mc);
+
+            StringAssert.Contains("boneRotations", json);
+        }
+
+        [Test]
         public void Deserialize_CurrentSchemaVersion_Succeeds()
         {
             IMasterclassSerializer serializer = new JsonMasterclassSerializer();

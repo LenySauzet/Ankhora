@@ -43,5 +43,28 @@ namespace Ankhora.Tests.EditMode
             Pose pose = TimelineSampler.SampleHead(TwoFrames(), 99f);
             Assert.That(pose.position.x, Is.EqualTo(10f).Within(1e-4f));
         }
+
+        [Test]
+        public void SampleHead_SingleFrame_ReturnsThatFramePose()
+        {
+            var tl = new Timeline { durationSeconds = 0f };
+            tl.frames.Add(new PoseFrame { t = 0.5f, head = new Pose(new Vector3(7f, 0f, 0f), Quaternion.identity) });
+
+            Pose pose = TimelineSampler.SampleHead(tl, 0.5f);
+            Assert.That(pose.position.x, Is.EqualTo(7f).Within(1e-4f));
+        }
+
+        [Test]
+        public void SampleHead_ThreeFrames_InterpolatesWithinCorrectBracket()
+        {
+            // Exercises the binary search: t=1.5 must interpolate the [1s, 2s] pair, not [0s, 1s].
+            var tl = new Timeline { durationSeconds = 2f };
+            tl.frames.Add(new PoseFrame { t = 0f, head = new Pose(new Vector3(0f, 0f, 0f), Quaternion.identity) });
+            tl.frames.Add(new PoseFrame { t = 1f, head = new Pose(new Vector3(10f, 0f, 0f), Quaternion.identity) });
+            tl.frames.Add(new PoseFrame { t = 2f, head = new Pose(new Vector3(20f, 0f, 0f), Quaternion.identity) });
+
+            Pose pose = TimelineSampler.SampleHead(tl, 1.5f);
+            Assert.That(pose.position.x, Is.EqualTo(15f).Within(1e-4f));
+        }
     }
 }

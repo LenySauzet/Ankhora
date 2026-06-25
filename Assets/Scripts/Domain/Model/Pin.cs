@@ -15,6 +15,12 @@ namespace Ankhora.Domain.Model
     {
         public float start;
         public float end;
+
+        /// <summary>
+        /// True when this is the (0,0) sentinel, i.e. the pin is visible for the whole chapter with
+        /// no explicit window. Call sites should use this instead of comparing against (0,0) by hand.
+        /// </summary>
+        public bool IsWholeChapter => start == 0f && end == 0f;
     }
 
     /// <summary>

@@ -15,7 +15,8 @@ namespace Ankhora.Domain.Model
 
         /// <summary>
         /// Learner-side progress. The on-device manifest is the learner's mutable working copy;
-        /// the authored recording is the read-only source (see the spec).
+        /// the authored recording is the read-only source (see the spec). MVP keeps this inline on
+        /// the chapter; a multi-learner V2 would split it into a separate progress document.
         /// </summary>
         public bool completed;
 
