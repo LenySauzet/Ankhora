@@ -30,8 +30,18 @@ self-contained `.html` report** (`reports/insights-YYYY-MM-DD.html`) with charts
   the board is sparse; PRs are the real work unit).
 - **Quality** — CodeRabbit findings raised/resolved, CI pass rate, review turnaround.
 - **Decisions & discoveries** — ADRs (Unity 6, MRTK), spikes, research dossier.
+- **Feature-flow diagrams** — hand-authored SVG illustrating the big features (the
+  record→replay loop and the S1→S8 build pipeline) so they can be explained on D-day.
 - **What worked / what didn't** + **improvement ideas / next steps**.
 - **Provenance appendix** — data sources + generation timestamp.
+
+It is **brand-coherent** ("spatial control deck": dark visionOS/Meta-Spatial glass, the
+Ankhora anchor logo, royal-blue→cyan accents, Bricolage Grotesque display) — a presentation
+artifact that showcases the team's work, not a generic dashboard.
+
+The skill can additionally **derive a horizontal slideshow deck**
+(`reports/slides-YYYY-MM-DD.html`) from the report — same data and brand, full-screen
+keyboard-navigable slides — for live presentation at the follow-up.
 
 ## How
 
@@ -73,10 +83,13 @@ series) into the HTML; no persisted schema.
 - [ ] Running it produces `reports/insights-YYYY-MM-DD.html`, a **single self-contained file**
       that opens offline (no network) and renders all charts.
 - [ ] Report covers every section listed in *What*, with charts for velocity, contribution,
-      board status, and quality.
+      board status, and quality, plus the two feature-flow SVG diagrams.
+- [ ] Report and slideshow follow the brand design ("spatial control deck" + anchor logo).
 - [ ] Board archived-item limitation and the contribution context note are stated in-report
       (honest provenance).
 - [ ] A first report for the 2026-06-25 follow-up is generated, verified, and committed.
+- [ ] The skill can derive a horizontal slideshow (`reports/slides-YYYY-MM-DD.html`); a first
+      deck for the 2026-06-25 follow-up is generated, verified, and committed.
 
 ## Out of scope
 
