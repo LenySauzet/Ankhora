@@ -3,40 +3,35 @@ using UnityEngine;
 namespace Ankhora.Foundation.Passthrough
 {
     /// <summary>
-    /// Real <see cref="IPassthroughSurface"/>: smoothly crossfades between the opaque VR background
-    /// and the real-world passthrough feed by animating the center-eye camera's background alpha
-    /// (1 = opaque VR, 0 = transparent, revealing the underlay passthrough). The eased progress is
-    /// computed by <see cref="PassthroughFade"/>.
+    /// Real <see cref="IPassthroughSurface"/>: drives the VR↔MR transition by publishing a global
+    /// shader value <c>_AnkhoraMrAmount</c> (0 = VR, 1 = MR, eased by <see cref="PassthroughFade"/>).
+    /// The VR environment shaders read it: the gradient sky uses it for a centre-of-vision radial
+    /// reveal of the passthrough underlay (and provides the VR backdrop via the skybox), and the
+    /// floor grid fades out. The model and grid stay visible in MR because the sky only paints
+    /// background pixels.
     ///
-    /// Two Meta-SDK facts shape this:
+    /// Two Meta-SDK facts still apply:
     /// 1. <c>OVRPassthroughLayer</c> only submits a compositor layer while
-    ///    <c>OVRManager.isInsightPassthroughEnabled</c> is true (enabling the component alone shows
-    ///    black — logcat "numLayers: 0"). The system is brought up once in <see cref="Awake"/> and
-    ///    kept ready so every toggle crossfades instantly instead of re-initialising (which is async
-    ///    and would flash black at the start of a fade-in). Cost: the passthrough cameras stay on in
-    ///    VR too; acceptable for an MVP comfort toggle.
-    /// 2. An underlay is only visible through a transparent eye buffer, so an opaque Skybox cannot
-    ///    crossfade with passthrough — VR therefore uses a solid <see cref="_vrBackground"/> colour
-    ///    (themeable) rather than the Skybox.
-    ///
-    /// Verified on device — Mac Editor Play Mode cannot render passthrough.
+    ///    <c>OVRManager.isInsightPassthroughEnabled</c> is true. The system is brought up once in
+    ///    <see cref="Awake"/> and kept ready so every toggle is instant (re-init is async and would
+    ///    flash). Cost: passthrough cameras stay on in VR too — fine for an MVP comfort toggle.
+    /// 2. The reveal works by lowering the eye-buffer alpha; the camera therefore clears to the
+    ///    skybox, whose shader writes that alpha. Verified on device — Mac Editor Play Mode cannot
+    ///    render passthrough.
     /// </summary>
     public class OvrPassthroughSurface : MonoBehaviour, IPassthroughSurface
     {
         [Tooltip("The underlay passthrough layer (virtual content renders on top).")]
         [SerializeField] private OVRPassthroughLayer _passthroughLayer;
 
-        [Tooltip("The center-eye camera whose background alpha is crossfaded to reveal passthrough.")]
+        [Tooltip("The center-eye camera, cleared to the gradient skybox.")]
         [SerializeField] private Camera _centerEyeCamera;
 
-        [Tooltip("Solid VR background shown when passthrough is off (themeable).")]
-        [SerializeField] private Color _vrBackground = Color.black;
-
-        [Tooltip("Seconds for the VR↔MR crossfade. 0 = instant.")]
+        [Tooltip("Seconds for the VR↔MR transition. 0 = instant.")]
         [SerializeField, Min(0f)] private float _transitionSeconds = 0.4f;
 
-        // Global shader property the VR environment (floor grid, gradient sky) reads to fade out
-        // in MR: 0 = full VR, 1 = full passthrough.
+        // Global shader property the VR environment (gradient sky reveal, floor grid) reads:
+        // 0 = full VR, 1 = full passthrough.
         private static readonly int MrAmountId = Shader.PropertyToID("_AnkhoraMrAmount");
 
         private PassthroughFade _fade;
@@ -51,13 +46,14 @@ namespace Ankhora.Foundation.Passthrough
             if (_passthroughLayer != null)
             {
                 _passthroughLayer.enabled = true;
-                _passthroughLayer.textureOpacity = 1f; // opacity is carried by the camera-alpha crossfade
+                _passthroughLayer.textureOpacity = 1f;
             }
 
+            // The gradient skybox provides the VR backdrop and writes the reveal alpha.
             if (_centerEyeCamera != null)
-                _centerEyeCamera.clearFlags = CameraClearFlags.SolidColor;
+                _centerEyeCamera.clearFlags = CameraClearFlags.Skybox;
 
-            Apply(); // snap to the initial target (VR at startup)
+            Apply();
         }
 
         public void SetEnabled(bool enabled) => _target = enabled ? 1f : 0f;
@@ -71,21 +67,8 @@ namespace Ankhora.Foundation.Passthrough
             Apply();
         }
 
-        private void Apply()
-        {
-            float mr = _fade.Opacity;
-
-            // Fade the VR environment (floor grid, gradient sky) out as passthrough comes in.
-            Shader.SetGlobalFloat(MrAmountId, mr);
-
-            if (_centerEyeCamera == null)
-                return;
-
-            // MR-ness fades the eye-buffer background from opaque VR colour to transparent, so the
-            // underlay passthrough is progressively revealed through it.
-            _centerEyeCamera.backgroundColor =
-                new Color(_vrBackground.r, _vrBackground.g, _vrBackground.b, 1f - mr);
-        }
+        // Publish the eased MR-ness; the sky reveal and grid fade read it from the global.
+        private void Apply() => Shader.SetGlobalFloat(MrAmountId, _fade.Opacity);
 
         private void OnDisable()
         {
