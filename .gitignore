@@ -141,3 +141,6 @@ InitTestScene*.unity*
 
 # --- Android/IL2CPP build artifacts (regenerated per build, never ship) ---
 /*_BurstDebugInformation_DoNotShip/
+
+# Superpowers SDD scratch (local, non-committed)
+.superpowers/
