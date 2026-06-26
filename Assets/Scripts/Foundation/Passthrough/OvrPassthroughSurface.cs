@@ -28,7 +28,7 @@ namespace Ankhora.Foundation.Passthrough
         [SerializeField] private Camera _centerEyeCamera;
 
         [Tooltip("Seconds for the VR↔MR transition. 0 = instant.")]
-        [SerializeField, Min(0f)] private float _transitionSeconds = 0.4f;
+        [SerializeField, Min(0f)] private float _transitionSeconds = 1.5f;
 
         // Global shader property the VR environment (gradient sky reveal, floor grid) reads:
         // 0 = full VR, 1 = full passthrough.
