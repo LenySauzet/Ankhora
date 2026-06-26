@@ -15,13 +15,19 @@ description: >
 
 # Ankhora insights report
 
-Produces `reports/insights-YYYY-MM-DD.html` — a **single self-contained file** (Chart.js
-vendored inline, data inlined) that opens offline and renders all charts. It is a
+Produces **two** dated, self-contained files (Chart.js vendored inline, data inlined, open
+offline): `reports/insights-YYYY-MM-DD.html` (the report) **and**
+`reports/slides-YYYY-MM-DD.html` (the presentation deck derived from it). They are a
 **source of truth** to prove and analyse the team's work. Spec:
 [`docs/05-operations/insights-report.md`](../../../docs/05-operations/insights-report.md).
 
-Each run = a fresh dated report. Use the **most recent** `reports/insights-*.html` as the
-visual template; only the data blob and the narrative change.
+**Always generate both by default** — the report first (§4), then the deck (§5) from the
+*same* data and brand, so the slideshow tracks the latest report automatically. Only skip
+the deck if the user explicitly asks for the report alone. Conversely, a bare "slides /
+diaporama / deck" request still regenerates the report's data first so the deck is current.
+
+Each run = a fresh dated pair. Use the **most recent** `reports/insights-*.html` and
+`reports/slides-*.html` as the visual templates; only the data blob and the narrative change.
 
 ## 0. Preconditions
 
@@ -143,10 +149,12 @@ PY
 
 ## 5. Render the slideshow deck (presentation mode)
 
-On a "slideshow / diaporama / présentation / deck" request, derive
-`reports/slides-<today>.html` from the **same data and brand** as the report — it is the
-live-presentation form of the same source of truth (don't invent new numbers; reuse the
-report's `DATA` and narrative). It is a separate self-contained file, **horizontal**:
+**Always run this step right after §4** (unless the user explicitly wanted the report
+alone). Derive `reports/slides-<today>.html` from the **same data and brand** as the
+report just rendered — it is the live-presentation form of the same source of truth
+(don't invent new numbers; reuse the report's `DATA` and narrative, and the prior
+`reports/slides-*.html` as the template). It is a separate self-contained file,
+**horizontal**:
 
 - **Layout**: a flex `.deck` of full-viewport `.slide`s, `scroll-snap-type:x mandatory`,
   each `min-width:100vw;height:100vh`. One idea per slide, big Bricolage headings, generous
@@ -213,7 +221,7 @@ them as separate commands).
 
 ## 7. Output
 
-Report the paths `reports/insights-<today>.html` and (if generated)
-`reports/slides-<today>.html`. Commit only the report/slideshow + skill/spec changes — never
+Report the paths `reports/insights-<today>.html` **and** `reports/slides-<today>.html`
+(both produced by default). Commit only the report/slideshow + skill/spec changes — never
 the user's uncommitted Unity WIP (stage files explicitly). Follow the team flow (Conventional
 Commits; the work lives on a `feat/tooling-*` branch + PR, see the spec).
