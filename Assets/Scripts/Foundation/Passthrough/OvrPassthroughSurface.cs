@@ -12,9 +12,10 @@ namespace Ankhora.Foundation.Passthrough
     ///
     /// Two Meta-SDK facts still apply:
     /// 1. <c>OVRPassthroughLayer</c> only submits a compositor layer while
-    ///    <c>OVRManager.isInsightPassthroughEnabled</c> is true. The system is brought up once in
-    ///    <see cref="Awake"/> and kept ready so every toggle is instant (re-init is async and would
-    ///    flash). Cost: passthrough cameras stay on in VR too — fine for an MVP comfort toggle.
+    ///    <c>OVRManager.isInsightPassthroughEnabled</c> is true. The system is brought up in
+    ///    <see cref="OnEnable"/> (torn down symmetrically in <see cref="OnDisable"/>) and kept ready
+    ///    so every toggle is instant (re-init is async and would flash). Cost: passthrough cameras
+    ///    stay on in VR too — fine for an MVP comfort toggle.
     /// 2. The reveal works by lowering the eye-buffer alpha; the camera therefore clears to the
     ///    skybox, whose shader writes that alpha. Verified on device — Mac Editor Play Mode cannot
     ///    render passthrough.
@@ -30,16 +31,21 @@ namespace Ankhora.Foundation.Passthrough
         [Tooltip("Seconds for the VR↔MR transition. 0 = instant.")]
         [SerializeField, Min(0f)] private float _transitionSeconds = 1.5f;
 
-        // Global shader property the VR environment (gradient sky reveal, floor grid) reads:
-        // 0 = full VR, 1 = full passthrough.
-        private static readonly int MrAmountId = Shader.PropertyToID("_AnkhoraMrAmount");
-
         private PassthroughFade _fade;
         private float _target;
 
         private void Awake()
         {
-            // Bring passthrough up once and keep it ready (see class summary, point 1).
+            // The gradient skybox provides the VR backdrop and writes the reveal alpha (one-time).
+            if (_centerEyeCamera != null)
+                _centerEyeCamera.clearFlags = CameraClearFlags.Skybox;
+        }
+
+        private void OnEnable()
+        {
+            // Bring passthrough up and keep it ready (see class summary, point 1). Symmetric with
+            // OnDisable so a disable/re-enable cycle (scene reload, rig reset) restores it instead
+            // of leaving the compositor layer dead for the rest of the session.
             if (OVRManager.instance != null)
                 OVRManager.instance.isInsightPassthroughEnabled = true;
 
@@ -48,10 +54,6 @@ namespace Ankhora.Foundation.Passthrough
                 _passthroughLayer.enabled = true;
                 _passthroughLayer.textureOpacity = 1f;
             }
-
-            // The gradient skybox provides the VR backdrop and writes the reveal alpha.
-            if (_centerEyeCamera != null)
-                _centerEyeCamera.clearFlags = CameraClearFlags.Skybox;
 
             Apply();
         }
@@ -68,12 +70,16 @@ namespace Ankhora.Foundation.Passthrough
         }
 
         // Publish the eased MR-ness; the sky reveal and grid fade read it from the global.
-        private void Apply() => Shader.SetGlobalFloat(MrAmountId, _fade.Opacity);
+        private void Apply() => Shader.SetGlobalFloat(PassthroughShaderProperties.MrAmount, _fade.Opacity);
 
         private void OnDisable()
         {
             if (OVRManager.instance != null)
                 OVRManager.instance.isInsightPassthroughEnabled = false;
+
+            // Reset the VR/MR global so the environment shaders don't keep a stale mid-fade value
+            // while the passthrough layer is gone (a re-enable republishes it from OnEnable).
+            Shader.SetGlobalFloat(PassthroughShaderProperties.MrAmount, 0f);
         }
     }
 }

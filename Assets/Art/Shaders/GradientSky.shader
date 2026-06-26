@@ -89,7 +89,8 @@ Shader "Ankhora/GradientSky"
                 col = lerp(col, _ColorLight.rgb, saturate(b) * 0.6);
 
                 // Centre-of-vision radial reveal, shared with the floor grid (AnkhoraReveal.hlsl).
-                float alpha = AnkhoraVrVisibility(dir, _Feather); // 1 = VR backdrop, 0 = passthrough
+                // dir is already normalized -> use the N variant to skip a redundant normalize.
+                float alpha = AnkhoraVrVisibilityN(dir, _Feather); // 1 = VR backdrop, 0 = passthrough
 
                 // Premultiplied alpha: the XR compositor blends the underlay as
                 // final = eyeColor + passthrough*(1 - alpha), so the sky colour must already be
