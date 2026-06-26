@@ -35,6 +35,10 @@ namespace Ankhora.Foundation.Passthrough
         [Tooltip("Seconds for the VR↔MR crossfade. 0 = instant.")]
         [SerializeField, Min(0f)] private float _transitionSeconds = 0.4f;
 
+        // Global shader property the VR environment (floor grid, gradient sky) reads to fade out
+        // in MR: 0 = full VR, 1 = full passthrough.
+        private static readonly int MrAmountId = Shader.PropertyToID("_AnkhoraMrAmount");
+
         private PassthroughFade _fade;
         private float _target;
 
@@ -69,14 +73,18 @@ namespace Ankhora.Foundation.Passthrough
 
         private void Apply()
         {
+            float mr = _fade.Opacity;
+
+            // Fade the VR environment (floor grid, gradient sky) out as passthrough comes in.
+            Shader.SetGlobalFloat(MrAmountId, mr);
+
             if (_centerEyeCamera == null)
                 return;
 
             // MR-ness fades the eye-buffer background from opaque VR colour to transparent, so the
             // underlay passthrough is progressively revealed through it.
-            float backgroundAlpha = 1f - _fade.Opacity;
             _centerEyeCamera.backgroundColor =
-                new Color(_vrBackground.r, _vrBackground.g, _vrBackground.b, backgroundAlpha);
+                new Color(_vrBackground.r, _vrBackground.g, _vrBackground.b, 1f - mr);
         }
 
         private void OnDisable()

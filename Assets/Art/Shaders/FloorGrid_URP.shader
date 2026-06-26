@@ -1,26 +1,34 @@
-// Ankhora floor grid — URP Unlit, single-pass-instanced (stereo) safe.
-// Anti-aliased world-space grid so the learner can read the space and their motion.
-// Cheap on Quest: unlit, no textures, math-only lines via fwidth; fades with distance.
+// Ankhora floor grid — URP Unlit, transparent, single-pass-instanced (stereo) safe.
+// An "infinite" world-space grid that fades out in a circle around the player, with major
+// cells subdivided into 4 by thinner minor lines. Shown only in VR: it dissolves as the
+// global _AnkhoraMrAmount (0 = VR, 1 = MR, driven by the passthrough transition) rises.
+// Cheap on Quest: unlit, math-only lines, fully-transparent fragments are discarded.
 Shader "Ankhora/FloorGrid"
 {
     Properties
     {
-        _BaseColor   ("Base Color", Color)        = (0.92, 0.93, 0.95, 1)
-        _LineColor   ("Line Color", Color)        = (0.45, 0.48, 0.55, 1)
-        _CellSize    ("Cell Size (m)", Float)     = 0.5
-        _LineWidth   ("Line Width (px)", Float)   = 1.2
-        _FadeStart   ("Fade Start (m)", Float)    = 6.0
-        _FadeEnd     ("Fade End (m)", Float)      = 16.0
+        _BaseColor      ("Base Color", Color)        = (0.90, 0.92, 0.96, 0.85)
+        _LineColor      ("Major Line Color", Color)  = (0.40, 0.44, 0.52, 1)
+        _MinorLineColor ("Minor Line Color", Color)  = (0.62, 0.66, 0.74, 0.7)
+        _CellSize       ("Major Cell (m)", Float)    = 1.0
+        _MajorWidth     ("Major Line (px)", Float)   = 1.6
+        _MinorWidth     ("Minor Line (px)", Float)   = 1.0
+        _Radius         ("Fade Radius (m)", Float)   = 9.0
+        _Softness       ("Fade Softness (m)", Float) = 5.0
     }
 
     SubShader
     {
-        Tags { "RenderType" = "Opaque" "RenderPipeline" = "UniversalPipeline" "Queue" = "Geometry" }
+        Tags { "RenderType" = "Transparent" "RenderPipeline" = "UniversalPipeline" "Queue" = "Transparent" }
 
         Pass
         {
             Name "ForwardUnlit"
             Tags { "LightMode" = "UniversalForward" }
+
+            Blend SrcAlpha OneMinusSrcAlpha
+            ZWrite Off
+            Cull Back
 
             HLSLPROGRAM
             #pragma vertex vert
@@ -45,11 +53,26 @@ Shader "Ankhora/FloorGrid"
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseColor;
                 float4 _LineColor;
+                float4 _MinorLineColor;
                 float  _CellSize;
-                float  _LineWidth;
-                float  _FadeStart;
-                float  _FadeEnd;
+                float  _MajorWidth;
+                float  _MinorWidth;
+                float  _Radius;
+                float  _Softness;
             CBUFFER_END
+
+            // Global, driven by the passthrough transition (0 = VR, 1 = MR). The grid is VR-only.
+            float _AnkhoraMrAmount;
+
+            // Anti-aliased line mask for a grid of the given cell size and pixel width.
+            float GridLine(float2 worldXZ, float cell, float widthPx)
+            {
+                float2 coord  = worldXZ / max(cell, 1e-3);
+                float2 deriv  = fwidth(coord);
+                float2 toLine = abs(frac(coord - 0.5) - 0.5) / max(deriv, 1e-5);
+                float  d      = min(toLine.x, toLine.y);
+                return 1.0 - saturate(d - (widthPx - 1.0));
+            }
 
             Varyings vert (Attributes IN)
             {
@@ -67,19 +90,29 @@ Shader "Ankhora/FloorGrid"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(IN);
 
-                // Anti-aliased grid from world XZ: distance (in pixels) to the nearest cell line.
-                float2 coord = IN.positionWS.xz / max(_CellSize, 1e-3);
-                float2 deriv = fwidth(coord);
-                float2 toLine = abs(frac(coord - 0.5) - 0.5) / max(deriv, 1e-5);
-                float  lineDist = min(toLine.x, toLine.y);
-                float  lineMask = 1.0 - saturate(lineDist - (_LineWidth - 1.0));
+                float2 xz = IN.positionWS.xz;
 
-                // Fade lines out with distance from the camera so the far grid doesn't shimmer.
-                float dist = distance(IN.positionWS, GetCameraPositionWS());
-                float fade = 1.0 - smoothstep(_FadeStart, _FadeEnd, dist);
+                // Major lines at the cell size; minor lines at half the cell -> 4 sub-squares.
+                float major = GridLine(xz, _CellSize, _MajorWidth);
+                float minor = GridLine(xz, _CellSize * 0.5, _MinorWidth);
 
-                half3 col = lerp(_BaseColor.rgb, _LineColor.rgb, lineMask * _LineColor.a * fade);
-                return half4(col, _BaseColor.a);
+                // Minor lines sit under the major ones; major wins where they overlap.
+                half4 lineCol = lerp(_MinorLineColor, _LineColor, major);
+                float lineMask = max(major, minor);
+
+                half3 rgb = lerp(_BaseColor.rgb, lineCol.rgb, lineMask);
+                float alpha = lerp(_BaseColor.a, lineCol.a, lineMask);
+
+                // Circular fade centred on the player so the grid reads as infinite.
+                float distXZ = distance(xz, GetCameraPositionWS().xz);
+                float radial = 1.0 - smoothstep(_Radius - _Softness, _Radius, distXZ);
+
+                alpha *= radial * (1.0 - saturate(_AnkhoraMrAmount));
+
+                if (alpha < 0.002)
+                    discard; // skip the fully-faded ring -> no overdraw beyond the circle
+
+                return half4(rgb, alpha);
             }
             ENDHLSL
         }
