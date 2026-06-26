@@ -26,7 +26,12 @@ Shader "Ankhora/FloorGrid"
             Name "ForwardUnlit"
             Tags { "LightMode" = "UniversalForward" }
 
-            Blend SrcAlpha OneMinusSrcAlpha
+            // Colour blends normally, but the ALPHA channel uses (One, OneMinusSrcAlpha) so the
+            // floor never lowers the eye-buffer alpha below the opaque VR background. Without this,
+            // the radial edge-fade (alpha < 1) would punch holes that reveal the passthrough underlay
+            // (the real room) in VR. dstA = srcA + dstA*(1-srcA): stays 1 in VR, and still fades to
+            // (1 - MrAmount) in MR as the floor dissolves, so the passthrough crossfade is preserved.
+            Blend SrcAlpha OneMinusSrcAlpha, One OneMinusSrcAlpha
             ZWrite Off
             Cull Back
 
