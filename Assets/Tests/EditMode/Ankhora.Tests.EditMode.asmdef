@@ -4,7 +4,8 @@
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "Ankhora.Domain"
+        "Ankhora.Domain",
+        "Ankhora.Foundation"
     ],
     "includePlatforms": [
         "Editor"

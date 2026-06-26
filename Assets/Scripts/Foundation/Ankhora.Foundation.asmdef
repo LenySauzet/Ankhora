@@ -1,0 +1,16 @@
+{
+    "name": "Ankhora.Foundation",
+    "rootNamespace": "Ankhora.Foundation",
+    "references": [
+        "Oculus.VR"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
