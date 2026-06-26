@@ -188,8 +188,13 @@ code{font-family:var(--mono);font-size:.86em;background:rgba(255,255,255,.06);pa
         <div class="note"><b>17 remarques actionnables</b> (snapshot du 25/06, non rafraîchi ce run — token <code>gh</code> invalide ; surtout PR&nbsp;#19, la couche <code>.claude/</code>). Garde-fous : <b>CodeRabbit + revue Claude + CI verte</b> avant chaque merge.</div>
       </div>
     </div>
-    <div class="card glass"><h3>Board — répartition par statut</h3><div class="chartbox" style="height:200px"><canvas id="boardChart"></canvas></div>
-      <div class="note"><b>Board <code>projects/3</code> sous-utilisé</b> (snapshot du 25/06, non rafraîchi ce run) ; les items <b>archivés</b> ne sont pas exposés par l'API GitHub → <b>les PRs mergées font foi</b> comme unité de travail.</div>
+    <div class="grid c2">
+      <div class="card glass"><h3>Board — répartition par statut</h3><div class="chartbox" style="height:200px"><canvas id="boardChart"></canvas></div>
+        <div class="note"><b>Board <code>projects/3</code> sous-utilisé</b> (snapshot du 25/06, non rafraîchi ce run) ; les items <b>archivés</b> ne sont pas exposés par l'API GitHub → <b>les PRs mergées font foi</b> comme unité de travail.</div>
+      </div>
+      <div class="card glass"><h3>PRs par type · Conventional Commits</h3><div class="chartbox" style="height:200px"><canvas id="typeChart"></canvas></div>
+        <div class="note"><b>23 PRs mergées</b> nommées <code>type(scope): sujet</code>. Dominante <b>chore</b> + <b>docs</b> : phase d'amorçage outillage &amp; spec ; les <b>feat</b> montent à mesure que le code produit arrive.</div>
+      </div>
     </div>
   </section>
 
@@ -344,9 +349,11 @@ const D={
   burn:[["30/05",11],["31/05",13],["02/06",14],["05/06",19],["25/06",23]],
   contrib:[["Lény Sauzet",71],["dependabot[bot]",5]],
   board:[["Backlog",1],["Done",1]],
-  cr:[["#10",2],["#19",15]]
+  cr:[["#10",2],["#19",15]],
+  prtype:[["chore",8],["fix",5],["docs",5],["feat",3],["ci",2]]
 };
 const BL="#5350ff",CY="#38d6ff",TE="#2ee6b6",SL="#5c6191";
+const TYPECOL={feat:"#5350ff",fix:"#ff6478",docs:"#38d6ff",chore:"#5c6191",ci:"#ffce6b",refactor:"#2ee6b6",perf:"#7e7bff",test:"#9aa3c7",style:"#b58cff",build:"#ff9e6b",revert:"#ff8a5b"};
 Chart.defaults.color="#9aa3c7";Chart.defaults.font.family="-apple-system,system-ui,sans-serif";Chart.defaults.font.size=11.5;
 const grid={color:"rgba(255,255,255,.06)"},nogrid={display:false};
 function grad(ctx,c1,c2){const g=ctx.createLinearGradient(0,0,0,240);g.addColorStop(0,c1);g.addColorStop(1,c2);return g;}
@@ -368,6 +375,10 @@ mk("boardChart",{type:"doughnut",data:{labels:D.board.map(x=>x[0]),datasets:[{da
   options:{responsive:true,maintainAspectRatio:false,cutout:"66%",plugins:{legend:{position:"bottom",labels:{boxWidth:11,padding:14}}}}});
 mk("qualityChart",{type:"bar",data:{labels:D.cr.map(x=>x[0]),datasets:[{data:D.cr.map(x=>x[1]),
   borderRadius:7,backgroundColor:c=>grad(c.chart.ctx,"#38d6ff","rgba(56,214,255,.25)")}]},
+  options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+   scales:{x:{beginAtZero:true,grid,ticks:{precision:0}},y:{grid:nogrid}}}});
+mk("typeChart",{type:"bar",data:{labels:D.prtype.map(x=>x[0]),datasets:[{data:D.prtype.map(x=>x[1]),
+  borderRadius:7,backgroundColor:D.prtype.map(x=>TYPECOL[x[0]]||SL)}]},
   options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
    scales:{x:{beginAtZero:true,grid,ticks:{precision:0}},y:{grid:nogrid}}}});
 </script>

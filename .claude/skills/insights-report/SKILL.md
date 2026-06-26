@@ -3,7 +3,7 @@ name: insights-report
 description: >
   Use to generate Ankhora's project insights / progress report for an Epitech follow-up or
   any review — a dated, self-contained HTML file with charts (KPIs, velocity, contribution,
-  board, quality, decisions & discoveries, feature-flow diagrams, what worked / didn't,
+  board, quality, PRs-by-type, decisions & discoveries, feature-flow diagrams, what worked / didn't,
   improvement ideas), AND to derive a horizontal slideshow deck from it for live
   presentation. Both share Ankhora's branded "spatial control deck" design (dark
   visionOS/Meta-Spatial glass, anchor logo, Bricolage Grotesque display). Pulls from the
@@ -47,6 +47,10 @@ jq -r '"add:\([.[].additions]|add) del:\([.[].deletions]|add)"' /tmp/prs.json
 jq -r '[.[]|select(.mergedAt!=null)|((.mergedAt|fromdate)-(.createdAt|fromdate))/3600]|add/length' /tmp/prs.json  # avg time-to-merge (h)
 jq -r '.[]|select(.mergedAt!=null)|.mergedAt[0:10]' /tmp/prs.json | sort | uniq -c   # PRs merged / day
 jq -r '.[].author.login' /tmp/prs.json | sort | uniq -c | sort -rn                   # PR authors
+# PRs by Conventional Commits type — parse the type prefix of each MERGED PR title
+# (the title's type is authoritative, not the branch name). Drives the "PRs by type" chart.
+jq -r '.[]|select(.mergedAt!=null)|.title' /tmp/prs.json \
+  | sed -E 's/^([a-z]+)(\(.*\))?!?:.*/\1/' | sort | uniq -c | sort -rn               # feat/fix/docs/chore/ci/…
 
 # Git — contribution across ALL branches (honest + broadened), activity, active days
 git fetch origin --quiet
@@ -81,9 +85,11 @@ ls docs/01-product/ docs/07-milestones.md                          # scope / mil
 
 ## 2. Compute KPIs & synthesise
 
-From the gathered numbers, fill the KPI cards and the five chart series — commits/day (bar),
+From the gathered numbers, fill the KPI cards and the six chart series — commits/day (bar),
 PR burn-up cumulative (line/area), contribution by author (doughnut), board status
-(doughnut), CodeRabbit findings per PR (horizontal bar). Then **reason over the artifacts** to
+(doughnut), CodeRabbit findings per PR (horizontal bar), and **PRs by Conventional Commits
+type** (horizontal bar — `D.prtype`, coloured via the `TYPECOL` map: feat=blue, fix=red,
+docs=cyan, chore=slate, ci=gold, …; robust to any type the team uses). Then **reason over the artifacts** to
 write the qualitative sections: executive summary, decisions & discoveries (read the ADRs
 and spike notes), what worked / what didn't, improvement ideas. Be honest and evidence-led;
 for contribution, broaden to all branches and add the bootstrap-phase context note (the

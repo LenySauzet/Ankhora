@@ -162,8 +162,11 @@ body.notes-on .presenter{transform:translateY(0)}
   <div class="slide">
     <div class="eyebrow">Vélocité</div>
     <h2>Une cadence soutenue sur la fondation</h2>
-    <div class="chartwrap"><canvas id="burnChart"></canvas></div>
-    <div class="lead muted" style="margin-top:10px">PRs cumulées — 20 mergées en 9 jours actifs, time-to-merge moyen ~32 h.</div>
+    <div style="display:grid;grid-template-columns:1.45fr 1fr;gap:30px;height:46vh;margin-top:10px">
+      <div style="position:relative"><div class="eyebrow" style="margin-bottom:6px">PRs cumulées · burn-up</div><div style="position:relative;height:calc(100% - 26px)"><canvas id="burnChart"></canvas></div></div>
+      <div style="position:relative"><div class="eyebrow" style="margin-bottom:6px">PRs par type · Conventional Commits</div><div style="position:relative;height:calc(100% - 26px)"><canvas id="typeChart"></canvas></div></div>
+    </div>
+    <div class="lead muted" style="margin-top:14px"><b>23 PRs mergées</b> en 9 jours actifs (~32 h de time-to-merge) — toutes nommées <code>type: sujet</code> ; dominante <b>chore</b> &amp; <b>docs</b> en phase fondation.</div>
   </div>
 
   <!-- 5 feature loop -->
@@ -287,7 +290,7 @@ const NOTES=[
  {t:"Ouverture",n:"Présente-toi et l'équipe (3 personnes). Accroche : Ankhora capture le geste d'un expert <b>une seule fois</b> et le rejoue à l'infini en VR/MR sur Quest 3. On a déjà un <b>build qui tourne sur casque</b> — voici notre point d'avancement."},
  {t:"Vision",n:"Le problème : former coûte cher, l'expert répète le même geste pour chaque nouveau. Notre promesse : on le capture <b>une fois</b> (voix + mains + ce qu'il pointe), chaque apprenant le rejoue à la demande autour de l'objet. <b>Aucun outil grand public ne fait ça aujourd'hui.</b>"},
  {t:"KPIs",n:"Donne le volume : <b>23 PRs, 76 commits, 20k lignes</b> de fondation, <b>CI verte à 100%</b>. Message : beaucoup produit en 9 jours effectifs, et avec rigueur — revue auto (CodeRabbit + Claude) et CI sur chaque merge."},
- {t:"Vélocité",n:"Montre la cadence : <b>23 PRs mergées en 9 jours actifs</b>, ~32 h de time-to-merge moyen. On itère vite et proprement, pas de PR qui traîne."},
+ {t:"Vélocité",n:"Montre la cadence : <b>23 PRs mergées en 9 jours actifs</b>, ~32 h de time-to-merge moyen. À droite, la répartition par type (Conventional Commits) : surtout <b>chore</b> &amp; <b>docs</b> — normal en phase fondation, les <b>feat</b> arrivent avec le code produit."},
  {t:"Feature cœur",n:"<b>LE cœur du produit — prends ton temps.</b> Suis les flèches : l'expert enregistre une fois (voix+mains+pins) → ça devient une Masterclass (JSON + blobs) → l'apprenant la rejoue (mains fantômes, scrub/slow/loop) avec toggle <b>Passthrough VR⇄MR</b>. C'est la feature qui définit le MVP."},
  {t:"Pipeline",n:"Notre plan de build en 8 tranches livrables, <b>risk-first</b> : on attaque le risque (S3, les mains) tôt, pas à la fin. Situe-toi : S1 planifié, le reste à venir. Relie aux jalons M0→M5."},
  {t:"Décisions",n:"Montre la maturité technique : <b>3 ADR</b> et deux jalons techniques majeurs — le <b>build device qui tourne</b> et le <b>cœur record/replay posé</b> (#26). Plus un spike qui a attrapé une incompatibilité tôt et un dossier de 33 sources. On décide sur des faits."},
@@ -318,6 +321,12 @@ if(ctx){const g=ctx.getContext('2d').createLinearGradient(0,0,0,360);g.addColorS
 Chart.defaults.color='#9aa3c7';Chart.defaults.font.size=13;
 new Chart(ctx,{type:'line',data:{labels:['30/05','31/05','02/06','05/06','25/06'],datasets:[{data:[11,13,14,19,23],borderColor:'#38d6ff',borderWidth:3,tension:.35,pointRadius:5,pointBackgroundColor:'#38d6ff',fill:true,backgroundColor:g}]},
 options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{precision:0}},x:{grid:{display:false}}}}});}
+// PRs by Conventional Commits type
+const TYPECOL={feat:'#5350ff',fix:'#ff6478',docs:'#38d6ff',chore:'#5c6191',ci:'#ffce6b',refactor:'#2ee6b6',perf:'#7e7bff',test:'#9aa3c7',style:'#b58cff',build:'#ff9e6b',revert:'#ff8a5b'};
+const PRTYPE=[['chore',8],['fix',5],['docs',5],['feat',3],['ci',2]];
+const tctx=document.getElementById('typeChart');
+if(tctx){new Chart(tctx,{type:'bar',data:{labels:PRTYPE.map(x=>x[0]),datasets:[{data:PRTYPE.map(x=>x[1]),borderRadius:7,backgroundColor:PRTYPE.map(x=>TYPECOL[x[0]]||'#5c6191')}]},
+options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{precision:0}},y:{grid:{display:false}}}}});}
 </script>
 </body>
 </html>
