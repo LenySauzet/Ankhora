@@ -418,6 +418,7 @@ MonoBehaviour:
   _passthroughLayer: {fileID: 1338011606}
   _centerEyeCamera: {fileID: 1196590466}
   _vrBackground: {r: 0, g: 0, b: 0, a: 1}
+  _transitionSeconds: 0.4
 --- !u!114 &1338011606
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -882,7 +883,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 5a1367f73d2304a6f9a4b23582054c7f, type: 2}
+  - {fileID: 2100000, guid: 4d7bd049e21c741dfaf63d3ffe99e88f, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
