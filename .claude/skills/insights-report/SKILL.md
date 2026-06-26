@@ -3,7 +3,7 @@ name: insights-report
 description: >
   Use to generate Ankhora's project insights / progress report for an Epitech follow-up or
   any review — a dated, self-contained HTML file with charts (KPIs, velocity, contribution,
-  board, quality, decisions & discoveries, feature-flow diagrams, what worked / didn't,
+  board, quality, PRs-by-type, decisions & discoveries, feature-flow diagrams, what worked / didn't,
   improvement ideas), AND to derive a horizontal slideshow deck from it for live
   presentation. Both share Ankhora's branded "spatial control deck" design (dark
   visionOS/Meta-Spatial glass, anchor logo, Bricolage Grotesque display). Pulls from the
@@ -15,13 +15,19 @@ description: >
 
 # Ankhora insights report
 
-Produces `reports/insights-YYYY-MM-DD.html` — a **single self-contained file** (Chart.js
-vendored inline, data inlined) that opens offline and renders all charts. It is a
+Produces **two** dated, self-contained files (Chart.js vendored inline, data inlined, open
+offline): `reports/insights-YYYY-MM-DD.html` (the report) **and**
+`reports/slides-YYYY-MM-DD.html` (the presentation deck derived from it). They are a
 **source of truth** to prove and analyse the team's work. Spec:
 [`docs/05-operations/insights-report.md`](../../../docs/05-operations/insights-report.md).
 
-Each run = a fresh dated report. Use the **most recent** `reports/insights-*.html` as the
-visual template; only the data blob and the narrative change.
+**Always generate both by default** — the report first (§4), then the deck (§5) from the
+*same* data and brand, so the slideshow tracks the latest report automatically. Only skip
+the deck if the user explicitly asks for the report alone. Conversely, a bare "slides /
+diaporama / deck" request still regenerates the report's data first so the deck is current.
+
+Each run = a fresh dated pair. Use the **most recent** `reports/insights-*.html` and
+`reports/slides-*.html` as the visual templates; only the data blob and the narrative change.
 
 ## 0. Preconditions
 
@@ -41,6 +47,10 @@ jq -r '"add:\([.[].additions]|add) del:\([.[].deletions]|add)"' /tmp/prs.json
 jq -r '[.[]|select(.mergedAt!=null)|((.mergedAt|fromdate)-(.createdAt|fromdate))/3600]|add/length' /tmp/prs.json  # avg time-to-merge (h)
 jq -r '.[]|select(.mergedAt!=null)|.mergedAt[0:10]' /tmp/prs.json | sort | uniq -c   # PRs merged / day
 jq -r '.[].author.login' /tmp/prs.json | sort | uniq -c | sort -rn                   # PR authors
+# PRs by Conventional Commits type — parse the type prefix of each MERGED PR title
+# (the title's type is authoritative, not the branch name). Drives the "PRs by type" chart.
+jq -r '.[]|select(.mergedAt!=null)|.title' /tmp/prs.json \
+  | sed -E 's/^([a-z]+)(\(.*\))?!?:.*/\1/' | sort | uniq -c | sort -rn               # feat/fix/docs/chore/ci/…
 
 # Git — contribution across ALL branches (honest + broadened), activity, active days
 git fetch origin --quiet
@@ -75,9 +85,11 @@ ls docs/01-product/ docs/07-milestones.md                          # scope / mil
 
 ## 2. Compute KPIs & synthesise
 
-From the gathered numbers, fill the KPI cards and the five chart series — commits/day (bar),
+From the gathered numbers, fill the KPI cards and the six chart series — commits/day (bar),
 PR burn-up cumulative (line/area), contribution by author (doughnut), board status
-(doughnut), CodeRabbit findings per PR (horizontal bar). Then **reason over the artifacts** to
+(doughnut), CodeRabbit findings per PR (horizontal bar), and **PRs by Conventional Commits
+type** (horizontal bar — `D.prtype`, coloured via the `TYPECOL` map: feat=blue, fix=red,
+docs=cyan, chore=slate, ci=gold, …; robust to any type the team uses). Then **reason over the artifacts** to
 write the qualitative sections: executive summary, decisions & discoveries (read the ADRs
 and spike notes), what worked / what didn't, improvement ideas. Be honest and evidence-led;
 for contribution, broaden to all branches and add the bootstrap-phase context note (the
@@ -143,10 +155,12 @@ PY
 
 ## 5. Render the slideshow deck (presentation mode)
 
-On a "slideshow / diaporama / présentation / deck" request, derive
-`reports/slides-<today>.html` from the **same data and brand** as the report — it is the
-live-presentation form of the same source of truth (don't invent new numbers; reuse the
-report's `DATA` and narrative). It is a separate self-contained file, **horizontal**:
+**Always run this step right after §4** (unless the user explicitly wanted the report
+alone). Derive `reports/slides-<today>.html` from the **same data and brand** as the
+report just rendered — it is the live-presentation form of the same source of truth
+(don't invent new numbers; reuse the report's `DATA` and narrative, and the prior
+`reports/slides-*.html` as the template). It is a separate self-contained file,
+**horizontal**:
 
 - **Layout**: a flex `.deck` of full-viewport `.slide`s, `scroll-snap-type:x mandatory`,
   each `min-width:100vw;height:100vh`. One idea per slide, big Bricolage headings, generous
@@ -213,7 +227,7 @@ them as separate commands).
 
 ## 7. Output
 
-Report the paths `reports/insights-<today>.html` and (if generated)
-`reports/slides-<today>.html`. Commit only the report/slideshow + skill/spec changes — never
+Report the paths `reports/insights-<today>.html` **and** `reports/slides-<today>.html`
+(both produced by default). Commit only the report/slideshow + skill/spec changes — never
 the user's uncommitted Unity WIP (stage files explicitly). Follow the team flow (Conventional
 Commits; the work lives on a `feat/tooling-*` branch + PR, see the spec).
