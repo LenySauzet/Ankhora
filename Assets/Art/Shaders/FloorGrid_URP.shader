@@ -7,12 +7,12 @@ Shader "Ankhora/FloorGrid"
 {
     Properties
     {
-        _BaseColor      ("Base Color", Color)        = (0.90, 0.92, 0.96, 0.85)
-        _LineColor      ("Major Line Color", Color)  = (0.40, 0.44, 0.52, 1)
-        _MinorLineColor ("Minor Line Color", Color)  = (0.62, 0.66, 0.74, 0.7)
+        _BaseColor      ("Base Color", Color)        = (0.961, 0.961, 0.996, 0.85) // #F5F5FE
+        _LineColor      ("Major Line Color", Color)  = (0.40, 0.44, 0.52, 0.9)
+        _MinorLineColor ("Minor Line Color", Color)  = (0.66, 0.69, 0.77, 0.55)
         _CellSize       ("Major Cell (m)", Float)    = 1.0
-        _MajorWidth     ("Major Line (px)", Float)   = 1.6
-        _MinorWidth     ("Minor Line (px)", Float)   = 1.0
+        _MajorWidth     ("Major Line (px)", Float)   = 1.0
+        _MinorWidth     ("Minor Line (px)", Float)   = 0.7
         _Radius         ("Fade Radius (m)", Float)   = 9.0
         _Softness       ("Fade Softness (m)", Float) = 5.0
     }
@@ -92,9 +92,9 @@ Shader "Ankhora/FloorGrid"
 
                 float2 xz = IN.positionWS.xz;
 
-                // Major lines at the cell size; minor lines at half the cell -> 4 sub-squares.
+                // Major lines at the cell size; minor lines every quarter cell -> 4x4 sub-squares.
                 float major = GridLine(xz, _CellSize, _MajorWidth);
-                float minor = GridLine(xz, _CellSize * 0.5, _MinorWidth);
+                float minor = GridLine(xz, _CellSize * 0.25, _MinorWidth);
 
                 // Minor lines sit under the major ones; major wins where they overlap.
                 half4 lineCol = lerp(_MinorLineColor, _LineColor, major);
