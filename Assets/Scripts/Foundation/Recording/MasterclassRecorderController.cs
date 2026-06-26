@@ -32,6 +32,10 @@ namespace Ankhora.Foundation.Recording
         private void Awake()
         {
             _source = _poseSourceBehaviour as IHandPoseSource;
+            if (_source == null)
+                Debug.LogError(
+                    "[MasterclassRecorderController] _poseSourceBehaviour is unset or does not implement " +
+                    "IHandPoseSource — recording is disabled until it is wired.", this);
             _recorder = new TimelineRecorder(_sampleRateHz);
             SavedFilePath = Path.Combine(Application.persistentDataPath, _fileName);
         }
@@ -53,8 +57,21 @@ namespace Ankhora.Foundation.Recording
 
         public void Toggle()
         {
-            if (IsRecording) StopAndSave();
-            else _recorder.Begin(Time.unscaledTime);
+            if (IsRecording)
+            {
+                StopAndSave();
+                return;
+            }
+
+            // Don't begin a doomed recording (it would write a zero-frame file on stop) when the
+            // scene is misconfigured — the Awake error already explains why.
+            if (_source == null)
+            {
+                Debug.LogWarning("[MasterclassRecorderController] Cannot start recording: no IHandPoseSource bound.");
+                return;
+            }
+
+            _recorder.Begin(Time.unscaledTime);
         }
 
         private void StopAndSave()
