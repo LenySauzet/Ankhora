@@ -29,6 +29,7 @@ Shader "Ankhora/GradientSky"
             #pragma multi_compile_instancing
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "AnkhoraReveal.hlsl"
 
             struct Attributes
             {
@@ -49,9 +50,6 @@ Shader "Ankhora/GradientSky"
                 float  _BlobSpeed;
                 float  _Feather;
             CBUFFER_END
-
-            // Driven by the passthrough transition (0 = VR, 1 = MR).
-            float _AnkhoraMrAmount;
 
             // Soft circular blob: 1 at the centre, smooth to 0 at radius r.
             float Blob(float2 p, float2 c, float r)
@@ -90,14 +88,13 @@ Shader "Ankhora/GradientSky"
                 b += Blob(uv, float2(sin(t * 0.7) * 0.5,        cos(t * 0.8) * 0.6 + 0.50), 1.30) * 0.6;
                 col = lerp(col, _ColorLight.rgb, saturate(b) * 0.6);
 
-                // Centre-of-vision radial reveal: as MR rises, a cone around the view forward opens,
-                // dropping alpha to 0 there so the passthrough underlay shows. Feathered edge.
-                float3 fwd = -UNITY_MATRIX_V[2].xyz;          // camera forward in world space
-                float centerness = dot(dir, fwd);             // 1 at the centre of vision
-                float threshold  = lerp(1.0 + _Feather, -1.0 - _Feather, saturate(_AnkhoraMrAmount));
-                float reveal     = smoothstep(threshold - _Feather, threshold + _Feather, centerness);
+                // Centre-of-vision radial reveal, shared with the floor grid (AnkhoraReveal.hlsl).
+                float alpha = AnkhoraVrVisibility(dir, _Feather); // 1 = VR backdrop, 0 = passthrough
 
-                return half4(col, 1.0 - reveal); // alpha 1 = VR backdrop, 0 = passthrough
+                // Premultiplied alpha: the XR compositor blends the underlay as
+                // final = eyeColor + passthrough*(1 - alpha), so the sky colour must already be
+                // scaled by alpha — otherwise it tints the real world where alpha -> 0.
+                return half4(col * alpha, alpha);
             }
             ENDHLSL
         }

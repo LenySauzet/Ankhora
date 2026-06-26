@@ -15,6 +15,7 @@ Shader "Ankhora/FloorGrid"
         _MinorWidth     ("Minor Line (px)", Float)   = 0.7
         _Radius         ("Fade Radius (m)", Float)   = 9.0
         _Softness       ("Fade Softness (m)", Float) = 5.0
+        _Feather        ("Reveal Feather", Range(0.02, 0.6)) = 0.18
     }
 
     SubShader
@@ -41,6 +42,7 @@ Shader "Ankhora/FloorGrid"
             #pragma multi_compile_instancing
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "AnkhoraReveal.hlsl"
 
             struct Attributes
             {
@@ -64,10 +66,8 @@ Shader "Ankhora/FloorGrid"
                 float  _MinorWidth;
                 float  _Radius;
                 float  _Softness;
+                float  _Feather;
             CBUFFER_END
-
-            // Global, driven by the passthrough transition (0 = VR, 1 = MR). The grid is VR-only.
-            float _AnkhoraMrAmount;
 
             // Anti-aliased line mask for a grid of the given cell size and pixel width.
             float GridLine(float2 worldXZ, float cell, float widthPx)
@@ -112,7 +112,10 @@ Shader "Ankhora/FloorGrid"
                 float distXZ = distance(xz, GetCameraPositionWS().xz);
                 float radial = 1.0 - smoothstep(_Radius - _Softness, _Radius, distXZ);
 
-                alpha *= radial * (1.0 - saturate(_AnkhoraMrAmount));
+                // Same centre-of-vision reveal as the sky (AnkhoraReveal.hlsl) so floor and sky
+                // transition as one seamless effect instead of a uniform grid fade.
+                float vis = AnkhoraVrVisibility(IN.positionWS - GetCameraPositionWS(), _Feather);
+                alpha *= radial * vis;
 
                 if (alpha < 0.002)
                     discard; // skip the fully-faded ring -> no overdraw beyond the circle
