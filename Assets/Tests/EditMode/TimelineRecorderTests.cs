@@ -87,5 +87,31 @@ namespace Ankhora.Tests.EditMode
             Assert.AreEqual(1, tl.frames[0].leftHand.boneRotations.Length);
             Assert.AreEqual(1, tl.frames[0].rightHand.boneRotations.Length);
         }
+
+        [Test]
+        public void Push_WithReusedBoneArray_SnapshotsEachFrameIndependently()
+        {
+            // The real capture sources reuse ONE bone array per hand and mutate it in place each
+            // frame. The recorder must snapshot the bone data per frame, not store the live reference.
+            var rec = new TimelineRecorder(10f);
+            rec.Begin(0f);
+
+            var bones = new Quaternion[1];
+            var hand = new HandPose { boneRotations = bones };
+
+            bones[0] = Quaternion.identity;
+            rec.Push(0f, default, hand, hand);            // frame at t=0
+
+            bones[0] = Quaternion.Euler(0f, 0f, 90f);     // mutate the SAME array
+            rec.Push(0.1f, default, hand, hand);          // frame at t=0.1
+
+            Timeline tl = rec.Finish(0.1f);
+
+            Assert.AreEqual(2, tl.frames.Count);
+            Assert.AreNotSame(tl.frames[0].leftHand.boneRotations, tl.frames[1].leftHand.boneRotations,
+                "Each frame must own a snapshot of the bone array, not alias the reused buffer.");
+            Assert.That(Quaternion.Angle(tl.frames[0].leftHand.boneRotations[0], Quaternion.identity), Is.LessThan(0.1f));
+            Assert.That(Quaternion.Angle(tl.frames[1].leftHand.boneRotations[0], Quaternion.Euler(0f, 0f, 90f)), Is.LessThan(0.1f));
+        }
     }
 }

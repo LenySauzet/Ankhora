@@ -48,14 +48,28 @@ namespace Ankhora.Domain.Recording
             {
                 t = now - _startTime,
                 head = head,
-                leftHand = left,
-                rightHand = right,
+                leftHand = CloneHand(left),
+                rightHand = CloneHand(right),
             });
 
             _nextSampleTime += _sampleInterval;
             // If a frame hitched and we fell behind, resync to avoid a burst of catch-up frames.
             if (_nextSampleTime < now)
                 _nextSampleTime = now + _sampleInterval;
+        }
+
+        // Capture sources reuse one bone array per hand across frames, so the recorder must snapshot
+        // the rotations per frame — storing the live reference would alias every frame to the last pose.
+        // Capture runs at the sample rate (~30 Hz), not the replay hot loop, so a per-frame clone is fine.
+        private static HandPose CloneHand(in HandPose hand)
+        {
+            return new HandPose
+            {
+                root = hand.root,
+                boneRotations = hand.boneRotations == null
+                    ? null
+                    : (Quaternion[])hand.boneRotations.Clone(),
+            };
         }
 
         /// <summary>Stop recording and return the finished timeline with its duration set.</summary>
