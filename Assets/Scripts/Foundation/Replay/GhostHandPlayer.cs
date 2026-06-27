@@ -89,6 +89,8 @@ namespace Ankhora.Foundation.Replay
             }
 
             _timeline = mc.chapters[0].timeline;
+            _leftView?.Bind(_timeline.skeleton);
+            _rightView?.Bind(_timeline.skeleton);
             _clock = 0f;
             _playing = true;
         }

@@ -1,3 +1,4 @@
+using Ankhora.Domain.Model;
 using UnityEngine;
 
 namespace Ankhora.Foundation.Replay
@@ -13,6 +14,9 @@ namespace Ankhora.Foundation.Replay
         [SerializeField] private GameObject _rigRoot;   // the skinned ghost hand, hidden until replay
         [SerializeField] private Transform _wrist;      // wrist bone (drives root pose)
         [SerializeField] private Transform[] _bones;    // bone transforms, capture order (index 0 == wrist)
+
+        /// <summary>Pre-wired skinned rig; the captured descriptor is not needed to build it.</summary>
+        public void Bind(HandSkeleton skeleton) { }
 
         public void Show(bool visible)
         {

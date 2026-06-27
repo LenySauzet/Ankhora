@@ -1,3 +1,4 @@
+using Ankhora.Domain.Model;
 using UnityEngine;
 
 namespace Ankhora.Foundation.Replay
@@ -5,12 +6,16 @@ namespace Ankhora.Foundation.Replay
     /// <summary>
     /// Diagnostic <see cref="IHandView"/>: drives a pre-assigned chain of joint transforms (small
     /// spheres) by setting each one's local rotation from the sampled bone rotations and the wrist
-    /// from the root. Proves the data pipeline cheaply when the skinned mesh looks wrong on device.
+    /// from the root. Superseded by <see cref="FkGhostHandView"/> for showing finger motion (rotating
+    /// a lone sphere is invisible); kept as a minimal seam example.
     /// </summary>
     public class DebugJointsHandView : MonoBehaviour, IHandView
     {
         [SerializeField] private Transform _wrist;
         [SerializeField] private Transform[] _joints; // ordered to match the captured bone order
+
+        /// <summary>Pre-wired in the scene; this view does not build itself from the descriptor.</summary>
+        public void Bind(HandSkeleton skeleton) { }
 
         public void Show(bool visible)
         {

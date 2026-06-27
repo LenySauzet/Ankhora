@@ -1,3 +1,4 @@
+using Ankhora.Domain.Model;
 using UnityEngine;
 
 namespace Ankhora.Foundation.Replay
@@ -9,6 +10,12 @@ namespace Ankhora.Foundation.Replay
     /// </summary>
     public interface IHandView
     {
+        /// <summary>
+        /// Provide the captured bone topology + rest poses so a rig that needs them (e.g. the FK
+        /// skeleton view) can build itself once. Views that don't need it may ignore the call.
+        /// </summary>
+        void Bind(HandSkeleton skeleton);
+
         /// <summary>Show or hide this hand (hidden when the recorded hand is untracked).</summary>
         void Show(bool visible);
 

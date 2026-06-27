@@ -18,5 +18,11 @@ namespace Ankhora.Domain.Model
         public List<PoseFrame> frames = new List<PoseFrame>();
 
         public List<Pin> pins = new List<Pin>();
+
+        /// <summary>
+        /// Hand bone topology + rest pose, captured once for this recording so replay can rebuild a
+        /// faithful articulated rig. Null/invalid for legacy recordings that stored only rotations.
+        /// </summary>
+        public HandSkeleton skeleton;
     }
 }
