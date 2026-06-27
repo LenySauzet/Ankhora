@@ -196,5 +196,57 @@ namespace Ankhora.Tests.EditMode
             Assert.That(lh.root.position.y, Is.EqualTo(0.2f).Within(1e-4f));
             Assert.That(Quaternion.Angle(lh.boneRotations[2], Quaternion.Euler(0f, 0f, 45f)), Is.LessThan(0.1f));
         }
+
+        [Test]
+        public void RoundTrip_FullCapturedTimeline_PreservesAllFramesAndBones()
+        {
+            // Build a realistic capture: 30 frames, both hands, 19 bones each, via the recorder.
+            const int boneCount = 19;
+            var recorder = new Ankhora.Domain.Recording.TimelineRecorder(30f);
+            recorder.Begin(0f);
+            for (int frame = 0; frame < 30; frame++)
+            {
+                float now = frame / 30f;
+                var left = new HandPose { root = new Pose(Vector3.one * frame, Quaternion.identity), boneRotations = new Quaternion[boneCount] };
+                var right = new HandPose { root = new Pose(Vector3.one * -frame, Quaternion.identity), boneRotations = new Quaternion[boneCount] };
+                for (int b = 0; b < boneCount; b++)
+                {
+                    left.boneRotations[b] = Quaternion.Euler(frame + b, 0f, 0f);
+                    right.boneRotations[b] = Quaternion.Euler(0f, frame + b, 0f);
+                }
+                recorder.Push(now, new Pose(Vector3.up * frame, Quaternion.identity), left, right);
+            }
+            Timeline tl = recorder.Finish(29f / 30f);
+
+            var mc = new Masterclass { id = "mc", title = "Captured" };
+            var ch = new Chapter { id = "c", timeline = tl };
+            mc.chapters.Add(ch);
+
+            IMasterclassSerializer serializer = new JsonMasterclassSerializer();
+            Masterclass restored = serializer.Deserialize(serializer.Serialize(mc));
+
+            Timeline rtl = restored.chapters[0].timeline;
+
+            // Assert round-trip FIDELITY against the recorder's actual output (tl), not against the
+            // generating formula at a fixed index. The fixed-rate accumulator may legitimately skip a
+            // sample at an exact 30 Hz boundary (float rounding of now vs the accumulated threshold),
+            // so frame indices are not guaranteed to map 1:1 to the pushed samples. What must hold is
+            // that serialisation preserves exactly what was recorded.
+            Assert.Greater(tl.frames.Count, 20, "Expected a full multi-frame capture.");
+            Assert.AreEqual(tl.frames.Count, rtl.frames.Count, "All recorded frames must survive the round-trip.");
+
+            for (int i = 0; i < tl.frames.Count; i++)
+            {
+                Assert.AreEqual(boneCount, rtl.frames[i].leftHand.boneRotations.Length, $"Left bone count at frame {i}");
+                Assert.AreEqual(boneCount, rtl.frames[i].rightHand.boneRotations.Length, $"Right bone count at frame {i}");
+            }
+
+            // A non-trivial bone rotation must survive serialisation unchanged (compare to the original).
+            int mid = tl.frames.Count / 2;
+            Assert.That(Quaternion.Angle(rtl.frames[mid].leftHand.boneRotations[5], tl.frames[mid].leftHand.boneRotations[5]),
+                Is.LessThan(0.1f));
+            Assert.That(Quaternion.Angle(rtl.frames[mid].rightHand.boneRotations[5], tl.frames[mid].rightHand.boneRotations[5]),
+                Is.LessThan(0.1f));
+        }
     }
 }

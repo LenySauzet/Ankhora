@@ -1,6 +1,6 @@
 # ADR-0003: Feature-based C# architecture with a shared Domain kernel
 
-- **Status:** Accepted
+- **Status:** Accepted — *layout superseded by [ADR-0004](0004-domain-foundation-two-assembly-split.md)* (kernel principles still hold)
 - **Date:** 2026-06-25
 - **Deciders:** Lény Sauzet (Claude Code pairing)
 - **Tags:** architecture, domain, conventions

@@ -2,6 +2,7 @@
     "name": "Ankhora.Foundation",
     "rootNamespace": "Ankhora.Foundation",
     "references": [
+        "Ankhora.Domain",
         "Oculus.VR"
     ],
     "includePlatforms": [],
