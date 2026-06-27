@@ -4,11 +4,12 @@ using UnityEngine;
 namespace Ankhora.Domain.Model
 {
     /// <summary>
-    /// The articulated structure of a captured hand, recorded ONCE per timeline (both hands share the
-    /// same bone topology, so a single descriptor suffices). It lets replay rebuild a faithful rest
-    /// skeleton — parent links + each bone's rest LOCAL pose — onto which the per-frame
-    /// <see cref="HandPose.boneRotations"/> are applied via forward kinematics. Without it, replay
-    /// would have to guess the skeleton and finger motion would look distorted.
+    /// The articulated structure of one captured hand: parent links + each bone's rest LOCAL pose.
+    /// Captured once per hand at the start of a take (the structure is constant) and stored per hand
+    /// on the <see cref="Timeline"/> — left and right are MIRRORED, so each needs its own descriptor.
+    /// Replay rebuilds a faithful rest skeleton from it and applies the per-frame
+    /// <see cref="HandPose.boneRotations"/> via forward kinematics; without it, finger motion would be
+    /// distorted.
     /// </summary>
     [Serializable]
     public class HandSkeleton

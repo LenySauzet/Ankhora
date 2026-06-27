@@ -45,6 +45,16 @@ namespace Ankhora.Tests.EditMode
         }
 
         [Test]
+        public void SampleHead_NullTimeline_ReturnsDefaultPose()
+        {
+            // Defensive: a null timeline must not throw (symmetry with SampleHand's null guard).
+            Pose pose = TimelineSampler.SampleHead(null, 0.5f);
+
+            Assert.That(pose.position, Is.EqualTo(Vector3.zero));
+            Assert.That(pose.rotation, Is.EqualTo(default(Quaternion)));
+        }
+
+        [Test]
         public void SampleHead_EmptyTimeline_ReturnsDefaultPose()
         {
             // No frames recorded yet: the sampler must not throw, it returns the default pose.

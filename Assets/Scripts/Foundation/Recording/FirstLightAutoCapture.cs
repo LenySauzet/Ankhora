@@ -1,41 +1,38 @@
-using System.IO;
-using Ankhora.Domain.Model;
 using Ankhora.Domain.Recording;
-using Ankhora.Domain.Serialization;
-using Ankhora.Foundation.Replay;
+using Ankhora.Foundation.Persistence;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Ankhora.Foundation.Recording
 {
     /// <summary>
-    /// Buttonless first-light harness for the hands capture → replay loop. On a fixed schedule —
-    /// countdown, record, done — it records both hands + head from an <see cref="IHandPoseSource"/>,
-    /// captures the bone skeleton once, writes the take to device storage, then tells a
-    /// <see cref="GhostHandPlayer"/> to load and loop it. No controller buttons, so it works while the
-    /// user's bare hands are tracked (a controller in hand would disable that hand's tracking).
+    /// Buttonless first-light bring-up harness for the hands capture → replay loop. On a fixed schedule
+    /// — countdown, record, done — it records from a <see cref="RecordingSession"/> and raises
+    /// <see cref="OnRecordingSaved"/> when the take is written, with no controller buttons (a held
+    /// controller would disable that hand's tracking). The replay is wired to that event in the scene,
+    /// so this Recording component does not depend on the Replay code.
     /// <para>
-    /// Verified on device: the macOS Editor cannot produce hand-tracking data, so the timing is pinned
+    /// Scaffolding: this is the de-risking harness, superseded by a real trigger (hand pinch) in the
+    /// hands-consolidation slice. Hand tracking can't run in the macOS Editor, so the timing is pinned
     /// in EditMode via <see cref="AutoCaptureClock"/> and this shell stays thin.
     /// </para>
     /// </summary>
     public class FirstLightAutoCapture : MonoBehaviour
     {
         [SerializeField] private MonoBehaviour _poseSourceBehaviour;  // implements IHandPoseSource
-        [SerializeField] private GhostHandPlayer _player;
         [SerializeField, Min(0f)] private float _countdownSeconds = 3f;
         [SerializeField, Min(1f)] private float _recordSeconds = 8f;
         [SerializeField, Min(1f)] private float _sampleRateHz = 30f;
         [SerializeField] private string _fileName = "masterclass.json";
 
-        private IHandPoseSource _source;
-        private IHandSkeletonSource _skeletonSource;
-        private TimelineRecorder _recorder;
+        [Tooltip("Raised after the take is saved — wire it to the ghost player's LoadAndPlay in the scene.")]
+        [SerializeField] private UnityEvent _onRecordingSaved = new UnityEvent();
+
+        public UnityEvent OnRecordingSaved => _onRecordingSaved;
+
+        private RecordingSession _session;
+        private MasterclassStore _store;
         private AutoCaptureClock _clock;
-        private readonly IMasterclassSerializer _serializer = new JsonMasterclassSerializer();
-        private HandPose _left;
-        private HandPose _right;
-        private HandSkeleton _leftSkeleton;
-        private HandSkeleton _rightSkeleton;
         private float _startTime;
         private AutoCapturePhase _phase = AutoCapturePhase.Countdown;
         private bool _recordingBegun;
@@ -43,11 +40,12 @@ namespace Ankhora.Foundation.Recording
 
         private void Awake()
         {
-            _source = _poseSourceBehaviour as IHandPoseSource;
-            _skeletonSource = _poseSourceBehaviour as IHandSkeletonSource;
-            if (_source == null)
+            var source = _poseSourceBehaviour as IHandPoseSource;
+            if (source == null)
                 Debug.LogError("[FirstLightAutoCapture] _poseSourceBehaviour must implement IHandPoseSource.", this);
-            _recorder = new TimelineRecorder(_sampleRateHz);
+            else
+                _session = new RecordingSession(source, _sampleRateHz);
+            _store = new MasterclassStore(_fileName);
             _clock = new AutoCaptureClock(_countdownSeconds, _recordSeconds);
         }
 
@@ -57,20 +55,16 @@ namespace Ankhora.Foundation.Recording
             _phase = AutoCapturePhase.Countdown;
             _recordingBegun = false;
             _saved = false;
-            _leftSkeleton = null;
-            _rightSkeleton = null;
             Debug.Log($"[FirstLightAutoCapture] Countdown {_countdownSeconds:0}s, then recording {_recordSeconds:0}s.");
         }
 
         private void Update()
         {
-            if (_source == null)
+            if (_session == null)
                 return;
 
             float now = Time.unscaledTime;
-            float elapsed = now - _startTime;
-            AutoCapturePhase phase = _clock.PhaseAt(elapsed);
-
+            AutoCapturePhase phase = _clock.PhaseAt(now - _startTime);
             if (phase != _phase)
             {
                 _phase = phase;
@@ -82,62 +76,32 @@ namespace Ankhora.Foundation.Recording
                 case AutoCapturePhase.Recording:
                     if (!_recordingBegun)
                     {
-                        _recorder.Begin(now);
+                        _session.Begin(now);
                         _recordingBegun = true;
                     }
-                    TryCaptureSkeleton();
-                    PushFrame(now);
+                    _session.Tick(now);
                     break;
 
                 case AutoCapturePhase.Done:
                     if (_recordingBegun && !_saved)
-                        StopAndReplay(now);
+                        StopAndPublish(now);
                     break;
             }
         }
 
-        private void TryCaptureSkeleton()
+        private void StopAndPublish(float now)
         {
-            if (_skeletonSource == null)
-                return;
-            // Capture each hand's mirrored skeleton independently — one can't substitute for the other.
-            if ((_leftSkeleton == null || !_leftSkeleton.IsValid) &&
-                _skeletonSource.TryGetSkeleton(false, out HandSkeleton left) && left.IsValid)
-                _leftSkeleton = left;
-            if ((_rightSkeleton == null || !_rightSkeleton.IsValid) &&
-                _skeletonSource.TryGetSkeleton(true, out HandSkeleton right) && right.IsValid)
-                _rightSkeleton = right;
-        }
-
-        private void PushFrame(float now)
-        {
-            _source.TryGetHead(out Pose head);
-            if (!_source.TryGetHand(false, ref _left)) _left.boneRotations = null;
-            if (!_source.TryGetHand(true, ref _right)) _right.boneRotations = null;
-            _recorder.Push(now, head, _left, _right);
-        }
-
-        private void StopAndReplay(float now)
-        {
-            Timeline timeline = _recorder.Finish(now);
-            timeline.leftSkeleton = _leftSkeleton;
-            timeline.rightSkeleton = _rightSkeleton;
-
-            var masterclass = new Masterclass { id = "mc-local", title = "First-light capture" };
-            masterclass.chapters.Add(new Chapter { id = "ch-1", timeline = timeline });
-
-            string path = Path.Combine(Application.persistentDataPath, _fileName);
-            File.WriteAllText(path, _serializer.Serialize(masterclass));
             _saved = true;
+            bool ok = _session.SaveTo(_store, now, out int frames, out string error);
+            if (!ok)
+            {
+                Debug.LogError($"[FirstLightAutoCapture] Save failed: {error}", this);
+                return;
+            }
 
-            int lBones = _leftSkeleton != null && _leftSkeleton.IsValid ? _leftSkeleton.boneParents.Length : 0;
-            int rBones = _rightSkeleton != null && _rightSkeleton.IsValid ? _rightSkeleton.boneParents.Length : 0;
-            Debug.Log($"[FirstLightAutoCapture] Saved {timeline.frames.Count} frames (L:{lBones} R:{rBones} bones) to {path}. Replaying.");
-
-            if (_player != null)
-                _player.LoadAndPlay();
-            else
-                Debug.LogWarning("[FirstLightAutoCapture] No GhostHandPlayer assigned — recorded but not replaying.");
+            Debug.Log($"[FirstLightAutoCapture] Saved {frames} frames " +
+                      $"(L:{_session.LeftBoneCount} R:{_session.RightBoneCount} bones) to {_store.Path}. Replaying.");
+            _onRecordingSaved.Invoke();
         }
     }
 }

@@ -91,14 +91,19 @@ namespace Ankhora.Tests.EditMode
         }
 
         [Test]
-        public void SampleHand_WritesIntoCallerArray_NoNewAllocation()
+        public void SampleHand_WritesIntoCallerArray_DoesNotReplaceIt()
         {
             var into = new Quaternion[1];
+            into[0] = Quaternion.Euler(123f, 45f, 67f);   // sentinel the sampler must overwrite
             Quaternion[] reference = into;
 
-            TimelineSampler.SampleHand(TwoHandFrames(), 0f, rightHand: true, into, out _);
+            // Sample the last frame (bone = 90° about Z) so we can prove the value landed in THIS array.
+            bool tracked = TimelineSampler.SampleHand(TwoHandFrames(), 1f, rightHand: true, into, out _);
 
+            Assert.IsTrue(tracked);
             Assert.AreSame(reference, into, "Sampler must fill the caller-owned array, not replace it.");
+            Assert.That(Quaternion.Angle(into[0], Quaternion.Euler(0f, 0f, 90f)), Is.LessThan(0.1f),
+                "Sampler must write the sampled rotation into the caller's array (not leave the sentinel).");
         }
     }
 }

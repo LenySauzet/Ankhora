@@ -45,8 +45,8 @@ namespace Ankhora.Tests.EditMode
         [Test]
         public void RelativeTo_RotatedReference_RotatesIntoLocalFrame()
         {
-            // Reference yawed 90° about Y. A world point 1m in front of the origin along +Z should,
-            // in the reference's local frame, lie along the reference's local +Z too.
+            // Reference yawed 90° about Y. A world point 1 m in front of the origin along +Z maps,
+            // in the reference's local frame, to local −X (Inverse(90° yaw) sends world +Z to local −X).
             var reference = new Pose(Vector3.zero, Quaternion.Euler(0f, 90f, 0f));
             var world = new Pose(new Vector3(0f, 0f, 1f), Quaternion.identity);
 

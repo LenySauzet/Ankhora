@@ -26,7 +26,7 @@ namespace Ankhora.Domain.Sampling
         /// </summary>
         public static Pose SampleHead(Timeline timeline, float t)
         {
-            var frames = timeline.frames;
+            var frames = timeline?.frames;
             if (frames == null || frames.Count == 0)
                 return default;
 

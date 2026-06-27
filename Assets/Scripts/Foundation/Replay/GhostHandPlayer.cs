@@ -1,7 +1,6 @@
-using System.IO;
 using Ankhora.Domain.Model;
 using Ankhora.Domain.Sampling;
-using Ankhora.Domain.Serialization;
+using Ankhora.Foundation.Persistence;
 using UnityEngine;
 
 namespace Ankhora.Foundation.Replay
@@ -10,18 +9,19 @@ namespace Ankhora.Foundation.Replay
     /// Loads a recorded masterclass from device storage and replays its first chapter as ghost hands:
     /// advances a playback clock, samples both hands from the <see cref="Timeline"/> each frame
     /// (into reused arrays, no hot-loop allocation), and drives an <see cref="IHandView"/> per hand.
-    /// A controller button starts playback; replay loops if enabled.
+    /// Replay starts via <see cref="LoadAndPlay"/> — wired to the recorder's "saved" event in the scene,
+    /// or to an optional controller button for re-watching. Replay loops if enabled.
     /// </summary>
     public class GhostHandPlayer : MonoBehaviour
     {
         [SerializeField] private MonoBehaviour _leftViewBehaviour;   // implements IHandView
         [SerializeField] private MonoBehaviour _rightViewBehaviour;  // implements IHandView
-        [SerializeField] private OVRInput.Button _playButton = OVRInput.Button.Two; // shared B/Y? choose a free button
+        [Tooltip("Optional manual re-watch trigger. PrimaryIndexTrigger by default (free of the passthrough B/Y toggle).")]
+        [SerializeField] private OVRInput.Button _playButton = OVRInput.Button.PrimaryIndexTrigger;
         [SerializeField] private string _fileName = "masterclass.json";
         [SerializeField] private bool _loop = true;
-        [SerializeField, Min(1)] private int _boneCapacity = 19;
 
-        private readonly IMasterclassSerializer _serializer = new JsonMasterclassSerializer();
+        private MasterclassStore _store;
         private IHandView _leftView;
         private IHandView _rightView;
         private Timeline _timeline;
@@ -29,13 +29,14 @@ namespace Ankhora.Foundation.Replay
         private Quaternion[] _rightBones;
         private float _clock;
         private bool _playing;
+        private bool _leftTracked;
+        private bool _rightTracked;
 
         private void Awake()
         {
+            _store = new MasterclassStore(_fileName);
             _leftView = _leftViewBehaviour as IHandView;
             _rightView = _rightViewBehaviour as IHandView;
-            _leftBones = new Quaternion[_boneCapacity];
-            _rightBones = new Quaternion[_boneCapacity];
             _leftView?.Show(false);
             _rightView?.Show(false);
         }
@@ -48,39 +49,37 @@ namespace Ankhora.Foundation.Replay
             if (!_playing || _timeline == null)
                 return;
 
-            _clock += Time.deltaTime;
+            // Unscaled so replay speed is owned here, not coupled to Time.timeScale (until slow-mo lands).
+            _clock += Time.unscaledDeltaTime;
             if (_clock >= _timeline.durationSeconds)
             {
                 if (_loop) _clock = 0f;
                 else { Stop(); return; }
             }
 
-            DriveHand(_leftView, rightHand: false, _leftBones);
-            DriveHand(_rightView, rightHand: true, _rightBones);
+            _leftTracked = DriveHand(_leftView, rightHand: false, _leftBones, _leftTracked);
+            _rightTracked = DriveHand(_rightView, rightHand: true, _rightBones, _rightTracked);
         }
 
-        private void DriveHand(IHandView view, bool rightHand, Quaternion[] buffer)
+        private bool DriveHand(IHandView view, bool rightHand, Quaternion[] buffer, bool wasTracked)
         {
-            if (view == null)
-                return;
+            if (view == null || buffer == null)
+                return false;
             bool tracked = TimelineSampler.SampleHand(_timeline, _clock, rightHand, buffer, out Pose root);
-            view.Show(tracked);
+            if (tracked != wasTracked)        // toggle visibility only on a track/untrack transition
+                view.Show(tracked);
             if (tracked)
                 view.Apply(root, buffer, buffer.Length);
+            return tracked;
         }
 
         public void LoadAndPlay()
         {
-            string path = Path.Combine(Application.persistentDataPath, _fileName);
-            if (!File.Exists(path))
+            if (!_store.TryLoad(out Masterclass mc, out string error))
             {
-                Debug.LogWarning($"[GhostHandPlayer] No recording at {path}");
+                Debug.LogWarning($"[GhostHandPlayer] {error}");
                 return;
             }
-
-            Masterclass mc;
-            try { mc = _serializer.Deserialize(File.ReadAllText(path)); }
-            catch (System.Exception e) { Debug.LogError($"[GhostHandPlayer] Load failed: {e.Message}"); return; }
 
             if (mc.chapters.Count == 0 || mc.chapters[0].timeline.frames.Count == 0)
             {
@@ -89,10 +88,15 @@ namespace Ankhora.Foundation.Replay
             }
 
             _timeline = mc.chapters[0].timeline;
+            EnsureBoneBuffers(_timeline);
             _leftView?.Bind(_timeline.leftSkeleton);
             _rightView?.Bind(_timeline.rightSkeleton);
+
             _clock = 0f;
             _playing = true;
+            _leftTracked = _rightTracked = false;   // force a Show() on the first tracked frame
+            _leftView?.Show(false);
+            _rightView?.Show(false);
         }
 
         public void Stop()
@@ -100,6 +104,27 @@ namespace Ankhora.Foundation.Replay
             _playing = false;
             _leftView?.Show(false);
             _rightView?.Show(false);
+            _leftTracked = _rightTracked = false;
         }
+
+        /// <summary>Size the reused sample buffers from the loaded recording's actual bone count.</summary>
+        private void EnsureBoneBuffers(Timeline timeline)
+        {
+            int needed = Mathf.Max(BoneCount(timeline.leftSkeleton), BoneCount(timeline.rightSkeleton));
+            if (needed == 0 && timeline.frames.Count > 0)
+            {
+                PoseFrame f = timeline.frames[0];
+                needed = Mathf.Max(f.leftHand.boneRotations?.Length ?? 0, f.rightHand.boneRotations?.Length ?? 0);
+            }
+            needed = Mathf.Max(needed, 1);
+
+            if (_leftBones == null || _leftBones.Length < needed)
+            {
+                _leftBones = new Quaternion[needed];
+                _rightBones = new Quaternion[needed];
+            }
+        }
+
+        private static int BoneCount(HandSkeleton s) => s != null && s.IsValid ? s.boneParents.Length : 0;
     }
 }
