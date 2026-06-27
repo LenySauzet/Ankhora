@@ -34,7 +34,8 @@ namespace Ankhora.Foundation.Recording
         private readonly IMasterclassSerializer _serializer = new JsonMasterclassSerializer();
         private HandPose _left;
         private HandPose _right;
-        private HandSkeleton _skeleton;
+        private HandSkeleton _leftSkeleton;
+        private HandSkeleton _rightSkeleton;
         private float _startTime;
         private AutoCapturePhase _phase = AutoCapturePhase.Countdown;
         private bool _recordingBegun;
@@ -56,7 +57,8 @@ namespace Ankhora.Foundation.Recording
             _phase = AutoCapturePhase.Countdown;
             _recordingBegun = false;
             _saved = false;
-            _skeleton = null;
+            _leftSkeleton = null;
+            _rightSkeleton = null;
             Debug.Log($"[FirstLightAutoCapture] Countdown {_countdownSeconds:0}s, then recording {_recordSeconds:0}s.");
         }
 
@@ -96,14 +98,15 @@ namespace Ankhora.Foundation.Recording
 
         private void TryCaptureSkeleton()
         {
-            if (_skeleton != null && _skeleton.IsValid)
-                return;
             if (_skeletonSource == null)
                 return;
-            if (_skeletonSource.TryGetSkeleton(false, out HandSkeleton left) && left.IsValid)
-                _skeleton = left;
-            else if (_skeletonSource.TryGetSkeleton(true, out HandSkeleton right) && right.IsValid)
-                _skeleton = right;
+            // Capture each hand's mirrored skeleton independently — one can't substitute for the other.
+            if ((_leftSkeleton == null || !_leftSkeleton.IsValid) &&
+                _skeletonSource.TryGetSkeleton(false, out HandSkeleton left) && left.IsValid)
+                _leftSkeleton = left;
+            if ((_rightSkeleton == null || !_rightSkeleton.IsValid) &&
+                _skeletonSource.TryGetSkeleton(true, out HandSkeleton right) && right.IsValid)
+                _rightSkeleton = right;
         }
 
         private void PushFrame(float now)
@@ -117,7 +120,8 @@ namespace Ankhora.Foundation.Recording
         private void StopAndReplay(float now)
         {
             Timeline timeline = _recorder.Finish(now);
-            timeline.skeleton = _skeleton;
+            timeline.leftSkeleton = _leftSkeleton;
+            timeline.rightSkeleton = _rightSkeleton;
 
             var masterclass = new Masterclass { id = "mc-local", title = "First-light capture" };
             masterclass.chapters.Add(new Chapter { id = "ch-1", timeline = timeline });
@@ -126,8 +130,9 @@ namespace Ankhora.Foundation.Recording
             File.WriteAllText(path, _serializer.Serialize(masterclass));
             _saved = true;
 
-            int bones = _skeleton != null && _skeleton.IsValid ? _skeleton.boneParents.Length : 0;
-            Debug.Log($"[FirstLightAutoCapture] Saved {timeline.frames.Count} frames ({bones} bones) to {path}. Replaying.");
+            int lBones = _leftSkeleton != null && _leftSkeleton.IsValid ? _leftSkeleton.boneParents.Length : 0;
+            int rBones = _rightSkeleton != null && _rightSkeleton.IsValid ? _rightSkeleton.boneParents.Length : 0;
+            Debug.Log($"[FirstLightAutoCapture] Saved {timeline.frames.Count} frames (L:{lBones} R:{rBones} bones) to {path}. Replaying.");
 
             if (_player != null)
                 _player.LoadAndPlay();

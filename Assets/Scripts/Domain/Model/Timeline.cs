@@ -20,9 +20,13 @@ namespace Ankhora.Domain.Model
         public List<Pin> pins = new List<Pin>();
 
         /// <summary>
-        /// Hand bone topology + rest pose, captured once for this recording so replay can rebuild a
-        /// faithful articulated rig. Null/invalid for legacy recordings that stored only rotations.
+        /// Per-hand bone topology + rest pose, captured once for this recording so replay can rebuild a
+        /// faithful articulated rig. Left and right are MIRRORED skeletons, so each must be stored and
+        /// applied separately — using one hand's bind poses for the other scatters its joints. Null/
+        /// invalid for legacy recordings or a hand that was never tracked.
         /// </summary>
-        public HandSkeleton skeleton;
+        public HandSkeleton leftSkeleton;
+
+        public HandSkeleton rightSkeleton;
     }
 }
