@@ -5,21 +5,29 @@ namespace Ankhora.Foundation.Replay
 {
     /// <summary>
     /// Skinned translucent ghost hand: the captured <see cref="HandSkeleton"/> is rebuilt as a parented
-    /// bone-transform hierarchy (same rig-build as <see cref="FkGhostHandView"/>), then a
-    /// <see cref="SkinnedMeshRenderer"/> is wired to the Meta hand mesh and skinned to those bones, so
-    /// the recorded finger articulation deforms a real hand mesh instead of floating joint spheres.
-    /// Drives through the same <see cref="IHandView"/> seam, so <c>GhostHandPlayer</c> is unchanged.
+    /// bone-transform hierarchy, then a <see cref="SkinnedMeshRenderer"/> is wired to the Meta hand mesh
+    /// and skinned to those bones, so the recorded finger articulation deforms a real hand mesh instead
+    /// of floating joint spheres. Drives through the same <see cref="IHandView"/> seam, so
+    /// <c>GhostHandPlayer</c> is unchanged.
     /// <para>
-    /// Approach A (our rig drives the Meta mesh): capture and replay derive from the SAME OVR skeleton,
-    /// so bone order and count match by construction (OpenXR 26-joint, count-agnostic). The mesh's own
-    /// bind poses are baked into <c>sharedMesh.bindposes</c>; we only supply the bone transforms and a
-    /// root. Device-verified — hand tracking does not render in the macOS Editor.
+    /// The Meta hand mesh is NOT the <c>OVRHand_*.fbx</c> asset — that mesh's vertex bone indices follow
+    /// the FBX armature's own ordering and have no relation to <c>OVRPlugin.BoneId</c>. The real mesh is
+    /// fetched from the headset at runtime by <see cref="OVRMesh"/>; we reuse the live hand's
+    /// <see cref="OVRMesh"/> and replicate exactly what <c>OVRMeshRenderer.Initialize()</c> does:
+    /// recompute <c>bindposes</c> from our rest rig (<c>bone.worldToLocal * meshRoot.localToWorld</c>,
+    /// then the OpenXR 180°-Y fixup), with bones in <c>BoneId</c> order (our captured order already is).
+    /// Binding the bare FBX mesh instead — the original bring-up mistake — tears the mesh apart. The mesh
+    /// data only exists on device, so this is device-verified (the macOS Editor can't render hand tracking).
     /// </para>
     /// </summary>
     public class SkinnedGhostHandView : MonoBehaviour, IHandView
     {
-        [Tooltip("Meta hand mesh for this hand: OVRHand_L for left, OVRHand_R for right.")]
-        [SerializeField] private Mesh _handMesh;
+        // Matches OVRMeshRenderer._openXRFixup exactly — corrects the OpenXR joint frame vs the mesh frame.
+        private static readonly Matrix4x4 OpenXRFixup = Matrix4x4.Rotate(new Quaternion(0f, 1f, 0f, 0f));
+
+        [Tooltip("The live hand's OVRMesh (same hand: left ghost -> left OVRHandPrefab's OVRMesh). " +
+                 "Supplies the runtime headset mesh; bindposes are recomputed here from the captured rig.")]
+        [SerializeField] private OVRMesh _ovrMesh;
         [SerializeField] private Material _ghostMaterial;
 
         private Transform[] _bones;     // index-aligned with captured boneRotations; _bones[0] == this.transform
@@ -30,11 +38,16 @@ namespace Ankhora.Foundation.Replay
         {
             if (_built || skeleton == null || !skeleton.IsValid)
                 return;
-            if (_handMesh == null)
+            if (_ovrMesh == null)
             {
-                Debug.LogError("[SkinnedGhostHandView] No hand mesh assigned.", this);
+                Debug.LogError("[SkinnedGhostHandView] No OVRMesh assigned.", this);
                 return;
             }
+            // The runtime mesh is fetched from the headset; if the live hand hasn't initialised it yet,
+            // build nothing and leave _built false so a later Bind retries (no duplicate rig).
+            if (!_ovrMesh.IsInitialized)
+                return;
+
             BuildRig(skeleton);
             BuildRenderer();
             _built = true;
@@ -60,13 +73,36 @@ namespace Ankhora.Foundation.Replay
             }
         }
 
+        /// <summary>
+        /// Builds the skinned renderer by replicating <c>OVRMeshRenderer.Initialize()</c>: take a private
+        /// copy of the runtime mesh (the live hand shares the original), recompute every bind pose from the
+        /// rig AT REST (this is called before the first <see cref="Apply"/>), and skin to our bone array.
+        /// </summary>
         private void BuildRenderer()
         {
+            // Private copy: OVRMesh.Mesh is a single runtime Mesh shared with the live hand's renderer, and
+            // we overwrite its bindposes — mutating the shared instance would corrupt the live hand.
+            Mesh mesh = Instantiate(_ovrMesh.Mesh);
+
             var go = new GameObject("GhostMesh");
-            go.transform.SetParent(transform, false);
+            go.transform.SetParent(transform, false);   // identity under the wrist root = the mesh frame
             _renderer = go.AddComponent<SkinnedMeshRenderer>();
-            _renderer.sharedMesh = _handMesh;       // bind poses are baked into the mesh
-            _renderer.bones = _bones;               // built transforms in captured-skeleton order
+
+            int n = _bones.Length;
+            var bindPoses = new Matrix4x4[n];
+            Matrix4x4 localToWorld = go.transform.localToWorldMatrix;
+            for (int i = 0; i < n; i++)
+            {
+                if (_bones[i] == null)
+                    continue;
+                // OVRMeshRenderer: bindPoses[i] = BindPoses[i].worldToLocal * meshRoot.localToWorld * fixup.
+                // Our rig is at its bind pose right now, so _bones[i].worldToLocalMatrix IS that bind pose.
+                bindPoses[i] = _bones[i].worldToLocalMatrix * localToWorld * OpenXRFixup;
+            }
+            mesh.bindposes = bindPoses;
+
+            _renderer.sharedMesh = mesh;
+            _renderer.bones = _bones;               // captured BoneId order == the mesh's blend-index order
             _renderer.rootBone = _bones[0];
             _renderer.localBounds = new Bounds(Vector3.zero, Vector3.one * 0.4f); // hand-sized; avoids culling pops
             _renderer.updateWhenOffscreen = true;

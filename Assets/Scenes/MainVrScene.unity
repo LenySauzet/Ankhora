@@ -196,6 +196,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1793066305}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &216954627
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 216954628}
+  m_Layer: 0
+  m_Name: HandRight PointerPose
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &216954628
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 216954627}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &253772340
 GameObject:
   m_ObjectHideFlags: 0
@@ -257,9 +288,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1908d1891f0504cc08023b63488ca30d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Ankhora.Foundation::Ankhora.Foundation.Replay.SkinnedGhostHandView
-  _handMesh: {fileID: 4703312045575268607, guid: 0b567a7c6d47e774ca65c81546f02af5,
-    type: 3}
-  _ghostMaterial: {fileID: 2100000, guid: 058715bc00b874dd2bf214383d7597fd, type: 2}
+  _ovrMesh: {fileID: 1084032118}
+  _ghostMaterial: {fileID: 2100000, guid: 536f41e460ece42afa9fd7b4f458cdb8, type: 2}
 --- !u!4 &290524780
 Transform:
   m_ObjectHideFlags: 0
@@ -419,6 +449,11 @@ PrefabInstance:
       propertyPath: _meshType
       value: 5
       objectReference: {fileID: 0}
+    - target: {fileID: 137619227449585070, guid: 835e735ca71bf78459fb2cababd74112,
+        type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2005775341}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -524,9 +559,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1908d1891f0504cc08023b63488ca30d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Ankhora.Foundation::Ankhora.Foundation.Replay.SkinnedGhostHandView
-  _handMesh: {fileID: -6207606337226253501, guid: 13f92dc3773e94e4bb99958bbd939c29,
-    type: 3}
-  _ghostMaterial: {fileID: 2100000, guid: 058715bc00b874dd2bf214383d7597fd, type: 2}
+  _ovrMesh: {fileID: 1792840919}
+  _ghostMaterial: {fileID: 2100000, guid: 536f41e460ece42afa9fd7b4f458cdb8, type: 2}
 --- !u!1 &905184054
 GameObject:
   m_ObjectHideFlags: 0
@@ -573,6 +607,51 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1793066305}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!21 &911902589
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_GhostHands_Blue (Instance)
+  m_Shader: {fileID: 4800000, guid: 701d2fd03b3104310a4e3826cf33ec59, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _Alpha: 0.3
+    - _EmissionStrength: 0.4
+    - _RimPower: 3
+    m_Colors:
+    - _BaseColor: {r: 0.6, g: 0.85, b: 1, a: 1}
+    - _RimColor: {r: 0.7, g: 0.9, b: 1, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
+--- !u!114 &1084032118 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 114925265787909616, guid: 835e735ca71bf78459fb2cababd74112,
+    type: 3}
+  m_PrefabInstance: {fileID: 398599880}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5cc5c234723e3a54d8dd09b131117743, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1106977228
 GameObject:
   m_ObjectHideFlags: 0
@@ -956,6 +1035,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 137619227449585070, guid: 835e735ca71bf78459fb2cababd74112,
+        type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 911902589}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1053,6 +1137,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 253772341}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1792840919 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 114925265787909616, guid: 835e735ca71bf78459fb2cababd74112,
+    type: 3}
+  m_PrefabInstance: {fileID: 1366158628}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5cc5c234723e3a54d8dd09b131117743, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &1793066304
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1106,20 +1202,24 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2037080, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
+      propertyPath: m_ClearFlags
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2037080, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
       propertyPath: m_BackGroundColor.a
-      value: 0.019607844
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2037080, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
       propertyPath: m_BackGroundColor.b
-      value: 0.4745098
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2037080, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
       propertyPath: m_BackGroundColor.g
-      value: 0.3019608
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2037080, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
       propertyPath: m_BackGroundColor.r
-      value: 0.19215687
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 11400000, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
       propertyPath: _trackingOriginType
@@ -1660,6 +1760,39 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!21 &2005775341
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_GhostHands_Blue (Instance)
+  m_Shader: {fileID: 4800000, guid: 701d2fd03b3104310a4e3826cf33ec59, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _Alpha: 0.3
+    - _EmissionStrength: 0.4
+    - _RimPower: 3
+    m_Colors:
+    - _BaseColor: {r: 0.6, g: 0.85, b: 1, a: 1}
+    - _RimColor: {r: 0.7, g: 0.9, b: 1, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!1 &2019550158
 GameObject:
   m_ObjectHideFlags: 0
@@ -1803,6 +1936,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2048238216
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2048238217}
+  m_Layer: 0
+  m_Name: HandLeft PointerPose
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2048238217
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2048238216}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1818,3 +1982,5 @@ SceneRoots:
   - {fileID: 67862027}
   - {fileID: 396598833}
   - {fileID: 1106977229}
+  - {fileID: 2048238217}
+  - {fileID: 216954628}
