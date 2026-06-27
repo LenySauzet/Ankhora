@@ -1,18 +1,30 @@
 Shader "Ankhora/GhostHands_URP"
 {
     // Soft "ghost hand" look (Ghost Hand Kit reference): a translucent, softly-lit body with a glowing
-    // Fresnel rim and a gradient fade toward the wrist. URP Unlit-style, single-pass-instanced safe, no
-    // scene-color/refraction. The wrist fade reuses Meta's baked hand gradient texture (_FingerGlowMask,
-    // sampled on UV0) so it matches the native hand fade on the real runtime mesh.
+    // Fresnel rim and a gradient fade toward the wrist. ONE shader, fully recolourable (_FillColor /
+    // _RimColor) so blue/gold/etc. are just material variants.
+    //
+    // Structure mirrors Meta's own Interaction/OculusHand shader (the proven approach on the runtime hand
+    // mesh), which solves the two artefacts a naive single-pass transparent shader has on Quest:
+    //   1. DEPTH PREPASS (ZWrite On, ColorMask 0) writes the front-most depth first; the colour pass then
+    //      runs ZTest LEqual so only the nearest surface shades per pixel. Overlapping translucent layers
+    //      (thumb over fingers) no longer compound their alpha, and you no longer see the BACK of the hand
+    //      or the real room through the volume.
+    //   2. WRIST FADE samples Meta's baked gradient mask (_FingerGlowMask) at FORCED LOD 0, in the vertex
+    //      shader, exactly like Meta (tex2Dlod). The wrist/forearm maps to a small low-alpha UV island;
+    //      with automatic mip selection that island averages toward opaque when the hand is small on screen
+    //      (mipMapsPreserveCoverage is off on the source texture), which is why the fade vanished on device
+    //      while looking fine in the close-up editor preview. LOD 0 keeps the island intact.
+    // Single-pass-instanced safe (stereo). No scene-colour / refraction (tiled mobile GPU).
     Properties
     {
-        _FillColor ("Fill Color", Color) = (0.25, 0.55, 1.0, 1.0)
-        _RimColor ("Rim Glow Color", Color) = (0.7, 0.9, 1.0, 1.0)
-        [Range(0,1)] _FillOpacity ("Fill Opacity", float) = 0.30
-        [Range(0.25,6)] _RimPower ("Rim Power (soft<->tight)", float) = 2.5
-        [Range(0,4)] _RimIntensity ("Rim Glow Intensity", float) = 1.6
+        _FillColor ("Fill Color", Color) = (0.42, 0.64, 1.0, 1.0)
+        _RimColor ("Rim Glow Color", Color) = (0.88, 0.96, 1.0, 1.0)
+        [Range(0,1)] _FillOpacity ("Fill Opacity", float) = 0.42
+        [Range(0.25,6)] _RimPower ("Rim Power (soft<->tight)", float) = 2.0
+        [Range(0,4)] _RimIntensity ("Rim Glow Intensity", float) = 1.9
         [Range(0,1)] _RimAlpha ("Rim Adds Opacity", float) = 0.7
-        [Range(0,1)] _CoreBrightness ("Core Form Shading", float) = 0.5
+        [Range(0,1)] _CoreBrightness ("Core Form Shading", float) = 0.4
         _LightDirection ("Soft Light Direction", Vector) = (0.3, 0.55, -0.75, 0)
         [NoScaleOffset] _FingerGlowMask ("Wrist Gradient (Meta mask)", 2D) = "white" {}
         [Range(0,1)] _WristFade ("Wrist Fade Bias", float) = 0.30
@@ -20,15 +32,68 @@ Shader "Ankhora/GhostHands_URP"
 
     SubShader
     {
-        Tags { "RenderType"="Transparent" "Queue"="Transparent" "RenderPipeline"="UniversalPipeline" }
+        Tags { "RenderType"="Transparent" "Queue"="Transparent" "RenderPipeline"="UniversalPipeline" "IgnoreProjector"="True" }
+        Cull Back
 
+        // --- Pass 1: depth prepass (no colour). Establishes the front-most surface so the fill below
+        //     shades only the nearest layer. Untagged-equivalent LightMode "SRPDefaultUnlit" so URP runs it
+        //     before UniversalForward, in shader order.
         Pass
         {
-            Name "GhostBody"
+            Name "GhostDepth"
+            Tags { "LightMode"="SRPDefaultUnlit" }
+            ZWrite On
+            ColorMask 0
+
+            HLSLPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_instancing
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4 positionHCS : SV_POSITION;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            Varyings vert (Attributes IN)
+            {
+                Varyings OUT;
+                UNITY_SETUP_INSTANCE_ID(IN);
+                UNITY_TRANSFER_INSTANCE_ID(IN, OUT);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(OUT);
+                OUT.positionHCS = GetVertexPositionInputs(IN.positionOS.xyz).positionCS;
+                return OUT;
+            }
+
+            half4 frag (Varyings IN) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(IN);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(IN);
+                return 0;
+            }
+            ENDHLSL
+        }
+
+        // --- Pass 2: soft-glow translucent fill. Depth already written by Pass 1 -> ZTest LEqual, ZWrite Off.
+        Pass
+        {
+            Name "GhostFill"
             Tags { "LightMode"="UniversalForward" }
-            Blend SrcAlpha OneMinusSrcAlpha
+            // Dual blend (matches Meta): straight alpha for colour, accumulate coverage in the alpha channel
+            // so the result composites correctly if it ever lands in an overlay/eye-buffer with alpha.
+            Blend SrcAlpha OneMinusSrcAlpha, OneMinusDstAlpha One
             ZWrite Off
-            Cull Back
+            ZTest LEqual
 
             HLSLPROGRAM
             #pragma vertex vert
@@ -65,7 +130,7 @@ Shader "Ankhora/GhostHands_URP"
                 float4 positionHCS : SV_POSITION;
                 float3 normalWS : TEXCOORD0;
                 float3 viewDirWS : TEXCOORD1;
-                float2 uv : TEXCOORD2;
+                half wristMask : TEXCOORD2;   // mask alpha sampled at LOD 0 (vertex), like Meta
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -82,7 +147,8 @@ Shader "Ankhora/GhostHands_URP"
                 OUT.positionHCS = p.positionCS;
                 OUT.normalWS = n.normalWS;
                 OUT.viewDirWS = GetWorldSpaceViewDir(p.positionWS);
-                OUT.uv = IN.uv;
+                // FORCED LOD 0: keep the small low-alpha wrist island from averaging away at distance.
+                OUT.wristMask = SAMPLE_TEXTURE2D_LOD(_FingerGlowMask, sampler_FingerGlowMask, IN.uv, 0).a;
                 return OUT;
             }
 
@@ -105,9 +171,8 @@ Shader "Ankhora/GhostHands_URP"
                 half3 body = _FillColor.rgb * form;
                 half3 col = body + _RimColor.rgb * fres * _RimIntensity;
 
-                // Wrist gradient from Meta's baked mask (UV0). At the wrist the mask alpha -> 0.
-                half mask = SAMPLE_TEXTURE2D(_FingerGlowMask, sampler_FingerGlowMask, IN.uv).a;
-                half fade = saturate(mask + _WristFade);
+                // Wrist gradient from Meta's baked mask (alpha -> 0 at the wrist UV island).
+                half fade = saturate(IN.wristMask + _WristFade);
 
                 half alpha = fade * saturate(_FillOpacity + fres * _RimAlpha);
                 return half4(col, alpha);
