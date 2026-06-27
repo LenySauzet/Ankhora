@@ -1,24 +1,34 @@
 Shader "Ankhora/GhostHands_URP"
 {
+    // Soft "ghost hand" look (Ghost Hand Kit reference): a translucent, softly-lit body with a glowing
+    // Fresnel rim and a gradient fade toward the wrist. URP Unlit-style, single-pass-instanced safe, no
+    // scene-color/refraction. The wrist fade reuses Meta's baked hand gradient texture (_FingerGlowMask,
+    // sampled on UV0) so it matches the native hand fade on the real runtime mesh.
     Properties
     {
-        _BaseColor ("Base Color", Color) = (0.6, 0.85, 1.0, 1.0)
-        _Alpha ("Alpha", Range(0,1)) = 0.3
-        _RimColor ("Rim Color", Color) = (0.7, 0.9, 1.0, 1.0)
-        _RimPower ("Rim Power", Range(0.5,8)) = 3.0
-        _EmissionStrength ("Emission Strength", Range(0,2)) = 0.4
+        _FillColor ("Fill Color", Color) = (0.25, 0.55, 1.0, 1.0)
+        _RimColor ("Rim Glow Color", Color) = (0.7, 0.9, 1.0, 1.0)
+        [Range(0,1)] _FillOpacity ("Fill Opacity", float) = 0.30
+        [Range(0.25,6)] _RimPower ("Rim Power (soft<->tight)", float) = 2.5
+        [Range(0,4)] _RimIntensity ("Rim Glow Intensity", float) = 1.6
+        [Range(0,1)] _RimAlpha ("Rim Adds Opacity", float) = 0.7
+        [Range(0,1)] _CoreBrightness ("Core Form Shading", float) = 0.5
+        _LightDirection ("Soft Light Direction", Vector) = (0.3, 0.55, -0.75, 0)
+        [NoScaleOffset] _FingerGlowMask ("Wrist Gradient (Meta mask)", 2D) = "white" {}
+        [Range(0,1)] _WristFade ("Wrist Fade Bias", float) = 0.30
     }
+
     SubShader
     {
         Tags { "RenderType"="Transparent" "Queue"="Transparent" "RenderPipeline"="UniversalPipeline" }
 
         Pass
         {
-            Name "GhostUnlit"
+            Name "GhostBody"
             Tags { "LightMode"="UniversalForward" }
             Blend SrcAlpha OneMinusSrcAlpha
             ZWrite Off
-            Cull Off
+            Cull Back
 
             HLSLPROGRAM
             #pragma vertex vert
@@ -27,18 +37,26 @@ Shader "Ankhora/GhostHands_URP"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
+            TEXTURE2D(_FingerGlowMask);
+            SAMPLER(sampler_FingerGlowMask);
+
             CBUFFER_START(UnityPerMaterial)
-                float4 _BaseColor;
-                float _Alpha;
+                float4 _FillColor;
                 float4 _RimColor;
+                float _FillOpacity;
                 float _RimPower;
-                float _EmissionStrength;
+                float _RimIntensity;
+                float _RimAlpha;
+                float _CoreBrightness;
+                float4 _LightDirection;
+                float _WristFade;
             CBUFFER_END
 
             struct Attributes
             {
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
+                float2 uv : TEXCOORD0;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -47,6 +65,7 @@ Shader "Ankhora/GhostHands_URP"
                 float4 positionHCS : SV_POSITION;
                 float3 normalWS : TEXCOORD0;
                 float3 viewDirWS : TEXCOORD1;
+                float2 uv : TEXCOORD2;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -58,11 +77,12 @@ Shader "Ankhora/GhostHands_URP"
                 UNITY_TRANSFER_INSTANCE_ID(IN, OUT);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(OUT);
 
-                VertexPositionInputs posInputs = GetVertexPositionInputs(IN.positionOS.xyz);
-                VertexNormalInputs normInputs = GetVertexNormalInputs(IN.normalOS);
-                OUT.positionHCS = posInputs.positionCS;
-                OUT.normalWS = normInputs.normalWS;
-                OUT.viewDirWS = GetWorldSpaceViewDir(posInputs.positionWS);
+                VertexPositionInputs p = GetVertexPositionInputs(IN.positionOS.xyz);
+                VertexNormalInputs n = GetVertexNormalInputs(IN.normalOS);
+                OUT.positionHCS = p.positionCS;
+                OUT.normalWS = n.normalWS;
+                OUT.viewDirWS = GetWorldSpaceViewDir(p.positionWS);
+                OUT.uv = IN.uv;
                 return OUT;
             }
 
@@ -71,17 +91,26 @@ Shader "Ankhora/GhostHands_URP"
                 UNITY_SETUP_INSTANCE_ID(IN);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(IN);
 
-                float3 normalWS = normalize(IN.normalWS);
-                float3 viewDirWS = normalize(IN.viewDirWS);
-                half fresnel = pow(saturate(1.0 - saturate(dot(normalWS, viewDirWS))), _RimPower);
+                float3 N = normalize(IN.normalWS);
+                float3 V = normalize(IN.viewDirWS);
+                float3 L = normalize(_LightDirection.xyz);
 
-                half3 rim = _RimColor.rgb * fresnel;
-                half3 color = _BaseColor.rgb + rim;
-                half3 emission = color * _EmissionStrength;
-                half3 finalColor = color + emission;
-                half alpha = saturate(_Alpha + fresnel * 0.3);
+                // Soft "form" shading so raised areas read brighter (the lit, volumetric ghost look).
+                half nl = saturate(dot(N, L) * 0.5 + 0.5);          // half-lambert, always >= 0
+                half form = lerp(1.0, nl, _CoreBrightness);
 
-                return half4(finalColor, alpha);
+                // Soft Fresnel rim glow on the silhouette.
+                half fres = pow(saturate(1.0 - saturate(dot(N, V))), _RimPower);
+
+                half3 body = _FillColor.rgb * form;
+                half3 col = body + _RimColor.rgb * fres * _RimIntensity;
+
+                // Wrist gradient from Meta's baked mask (UV0). At the wrist the mask alpha -> 0.
+                half mask = SAMPLE_TEXTURE2D(_FingerGlowMask, sampler_FingerGlowMask, IN.uv).a;
+                half fade = saturate(mask + _WristFade);
+
+                half alpha = fade * saturate(_FillOpacity + fres * _RimAlpha);
+                return half4(col, alpha);
             }
             ENDHLSL
         }

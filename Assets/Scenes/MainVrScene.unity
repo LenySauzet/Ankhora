@@ -289,7 +289,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Ankhora.Foundation::Ankhora.Foundation.Replay.SkinnedGhostHandView
   _ovrMesh: {fileID: 1084032118}
-  _ghostMaterial: {fileID: 2100000, guid: 536f41e460ece42afa9fd7b4f458cdb8, type: 2}
+  _ghostMaterial: {fileID: 2100000, guid: 6535aadf1145841b6b2e1967f0d9c96b, type: 2}
 --- !u!4 &290524780
 Transform:
   m_ObjectHideFlags: 0
@@ -453,7 +453,7 @@ PrefabInstance:
         type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2005775341}
+      objectReference: {fileID: 2100000, guid: 9a71bc986fe2440808f428dafb1eaa0c, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -560,7 +560,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Ankhora.Foundation::Ankhora.Foundation.Replay.SkinnedGhostHandView
   _ovrMesh: {fileID: 1792840919}
-  _ghostMaterial: {fileID: 2100000, guid: 536f41e460ece42afa9fd7b4f458cdb8, type: 2}
+  _ghostMaterial: {fileID: 2100000, guid: 6535aadf1145841b6b2e1967f0d9c96b, type: 2}
 --- !u!1 &905184054
 GameObject:
   m_ObjectHideFlags: 0
@@ -607,39 +607,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1793066305}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!21 &911902589
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: M_GhostHands_Blue (Instance)
-  m_Shader: {fileID: 4800000, guid: 701d2fd03b3104310a4e3826cf33ec59, type: 3}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords: []
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs: []
-    m_Ints: []
-    m_Floats:
-    - _Alpha: 0.3
-    - _EmissionStrength: 0.4
-    - _RimPower: 3
-    m_Colors:
-    - _BaseColor: {r: 0.6, g: 0.85, b: 1, a: 1}
-    - _RimColor: {r: 0.7, g: 0.9, b: 1, a: 1}
-  m_BuildTextureStacks: []
-  m_AllowLocking: 1
 --- !u!114 &1084032118 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 114925265787909616, guid: 835e735ca71bf78459fb2cababd74112,
@@ -1039,7 +1006,7 @@ PrefabInstance:
         type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 911902589}
+      objectReference: {fileID: 2100000, guid: 9a71bc986fe2440808f428dafb1eaa0c, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1760,39 +1727,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!21 &2005775341
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: M_GhostHands_Blue (Instance)
-  m_Shader: {fileID: 4800000, guid: 701d2fd03b3104310a4e3826cf33ec59, type: 3}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords: []
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs: []
-    m_Ints: []
-    m_Floats:
-    - _Alpha: 0.3
-    - _EmissionStrength: 0.4
-    - _RimPower: 3
-    m_Colors:
-    - _BaseColor: {r: 0.6, g: 0.85, b: 1, a: 1}
-    - _RimColor: {r: 0.7, g: 0.9, b: 1, a: 1}
-  m_BuildTextureStacks: []
-  m_AllowLocking: 1
 --- !u!1 &2019550158
 GameObject:
   m_ObjectHideFlags: 0
