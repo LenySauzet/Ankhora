@@ -15,15 +15,15 @@ Scripts/
                           #   Timeline also carries left/right HandSkeleton (per-hand bone topology + bind poses)
     Serialization/        # persist the model: IMasterclassSerializer, JsonMasterclassSerializer, MasterclassMigrator
     Sampling/             # pure read logic: TimelineSampler (interpolated head + per-hand bone playback)
-    Recording/            # pure timing: TimelineRecorder (fixed-rate accumulator), AutoCaptureClock
+    Recording/            # pure timing: TimelineRecorder (fixed-rate accumulator), RecordingCountdown (pure countdown gate for the pinch-armed take), PinchEdgeDetector (pure debounced rising-edge pinch detector)
     Spatial/              # pure transforms: PoseSpace (world ↔ reference-frame conversions)
   Foundation/             # device layer — MonoBehaviour + OVR. Assembly: Ankhora.Foundation → Ankhora.Domain, Oculus.VR.
     Recording/            # IHandPoseSource / IHandSkeletonSource seams, OvrHandPoseSource (OVRSkeleton reader),
-                          #   RecordingSession (shared capture core), FirstLightAutoCapture (bring-up trigger)
-    Replay/               # IHandView seam, GhostHandPlayer (drives views from a Timeline), FkGhostHandView
+                          #   RecordingSession (shared capture core), PinchRecordingTrigger (non-dominant index-pinch toggle → 3-2-1 countdown → record → second pinch saves)
+    Replay/               # IHandView seam, GhostHandPlayer (drives views from a Timeline), SkinnedGhostHandView (default — skinned translucent Meta hand mesh), FkGhostHandView (fallback — joint spheres, validated debug visual)
     Persistence/          # MasterclassStore (load/save JSON to persistentDataPath)
     Passthrough/          # OvrPassthroughSurface + shader props
-    App/                  # composition roots that wire features together (e.g. FirstLightReplayLink)
+    App/                  # composition roots that wire features together (e.g. RecordReplayLink)
 ```
 
 Tests live in `Assets/Tests/EditMode/` (assembly `Ankhora.Tests.EditMode`, references `Ankhora.Domain` + `Ankhora.Foundation`).
@@ -44,16 +44,16 @@ Tests live in `Assets/Tests/EditMode/` (assembly `Ankhora.Tests.EditMode`, refer
 ## Canonical vs. scaffolding (read before extending)
 
 - **Canonical path:** `OvrHandPoseSource` → `RecordingSession` (+ `MasterclassStore`) → JSON; then
-  `GhostHandPlayer` → `FkGhostHandView`. `RecordingSession` is the shared capture core every trigger
-  delegates to (it captures the per-hand skeleton — a recorder that skips that produces unreplayable files).
-- **Scaffolding (transitional):** `FirstLightAutoCapture` + `AutoCaptureClock` are the buttonless
-  bring-up trigger, to be replaced by a hand-pinch trigger in the hands-consolidation slice;
-  `FkGhostHandView` (joint spheres) is the validated debug visual, to be joined/replaced by a skinned
-  Meta ghost mesh. `SimulatedHandPoseSource` is the Mac/headless stand-in.
+  `GhostHandPlayer` → `SkinnedGhostHandView` (default) / `FkGhostHandView` (fallback). `RecordingSession`
+  is the shared capture core every trigger delegates to (it captures the per-hand skeleton — a recorder
+  that skips that produces unreplayable files).
+- **Scaffolding (transitional):** `PinchRecordingTrigger` is the current interim recording trigger — a
+  non-dominant index-pinch arms a 3-2-1 countdown (keeping the arming gesture out of the recorded
+  window), a second pinch stops and saves; the real control will come from the product UI later.
+  `SimulatedHandPoseSource` is the Mac/headless stand-in.
 
 ## Planned next slices
 
-- **Consolidation:** Meta Building-Blocks hand rig (live hands) + skinned ghost mesh + pinch trigger.
 - **Voice Track**, **Annotations (Text/Image Pins)**, **Player controls** (scrub / slow-mo / loop / recenter / passthrough toggle).
 
 Out of scope (V2): anchors at scale, backend sync, marketplace, multi-user — see `docs/01-product/mvp-scope.md`.

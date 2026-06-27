@@ -22,7 +22,7 @@ namespace Ankhora.Foundation.Recording
         [Tooltip("The non-dominant hand whose index pinch arms/stops the take.")]
         [SerializeField] private OVRHand _triggerHand;
         [SerializeField] private MonoBehaviour _poseSourceBehaviour;   // implements IHandPoseSource
-        [SerializeField, Min(0f)] private float _countdownSeconds = 3f;
+        [SerializeField, Min(1f)] private float _countdownSeconds = 3f;
         [SerializeField, Min(1f)] private float _sampleRateHz = 30f;
         [SerializeField, Min(0f)] private float _pinchDebounceSeconds = 0.05f;
         [SerializeField] private string _fileName = "masterclass.json";
