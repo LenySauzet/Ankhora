@@ -98,7 +98,19 @@ How the transport works (per-OS, per-user — **not** committed as a project `.m
 - **Run on device**: the verified Mac loop is `Cmd+B` (Build And Run installs + launches automatically). Manual reinstall of an existing APK: `adb install -r path/to/build.apk` over USB (Mac & Windows). On Mac, `adb` ships inside the Unity editor at `…/PlaybackEngines/AndroidPlayer/SDK/platform-tools/` — add it to `PATH` (already done in Lény's `~/.zshrc`).
 - **Test**: `com.unity.test-framework` `1.6.0` is in the manifest. EditMode tests live under `Assets/Tests/EditMode/` (currently a single smoke test that gates compilation in CI). Add real coverage there as gameplay code lands.
 
+### Hand-tracking rig gotcha (cost a full debug session, 2026-06-27)
+
+- A **hand-rolled** `OVRHand` + `OVRSkeleton` GameObject defaults to `HandType = -1` and `_skeletonType = -1` (= **None**) → the skeleton never initialises, capture records **0 bones**, hands silently don't track. Always set `HandType`/`_skeletonType` to `0` (left) / `1` (right). Better still, **don't hand-roll it** — instantiate Meta's `OVRHandPrefab` / use the hand-tracking Building Block (per the *Conventions* rule above); they ship pre-configured.
+- The project runs the **OpenXR hand skeleton** (`[OVRManager] Current hand skeleton version is OpenXR`). On load Meta auto-upgrades `HandLeft(0)/HandRight(1)` → `XRHandLeft(4)/XRHandRight(5)`, and the hand has **26 joints**, not the legacy 19. Keep bone-buffer capacities ≥ 26; treat `HandPose.boneRotations` length as count-agnostic.
+
+### Debugging a device build from Claude Code (no headset needed for logs)
+
+- `adb` is **not** on the non-interactive shell `PATH`. Use the absolute path: `/Applications/Unity/Hub/Editor/6000.4.10f1/PlaybackEngines/AndroidPlayer/SDK/platform-tools/adb`.
+- The Quest is USB-tethered to Lény's Mac and Claude's Bash runs on that Mac, so Claude can drive adb directly: `am force-stop com.tolkai.ankhora; logcat -c; monkey -p com.tolkai.ankhora -c android.intent.category.LAUNCHER 1; sleep N; logcat -d -s Unity`. **Fresh-launch each run** — Unity `Debug.Log` lands under tag `Unity` and `OnEnable`/`Awake` logs only fire on a clean start.
+- `Build And Run` ships a **release** build → `run-as` is denied (`package not debuggable`), so reading `persistentDataPath` files needs a Development Build; `logcat` still shows all `Debug.Log`.
+
 > First successful Mac → Quest 3 build & run: 2026-06-25 (Lény's station).
+> First end-to-end hands capture → ghost replay on device: 2026-06-27 (Lény's station).
 
 ## Out of scope (MVP — ultra-thin given the timeline)
 
