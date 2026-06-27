@@ -162,3 +162,26 @@ trigger is a deliberate interim; the UI trigger is a later platform/product slic
 - ADR: [0004 — Domain + Foundation split](../../02-architecture/adr/0004-domain-foundation-two-assembly-split.md)
 - Code map: [`Assets/Scripts/CONTEXT.md`](../../../Assets/Scripts/CONTEXT.md)
 - MVP scope: [`docs/01-product/mvp-scope.md`](../../01-product/mvp-scope.md)
+
+## Addendum (2026-06-27, device-driven correction)
+
+On-device, the skinned ghost replayed as an **exploded mesh** — the materialised Risk 1.
+Root cause: `SkinnedGhostHandView` bound the `OVRHand_*.fbx` mesh, whose vertex bone indices
+follow the FBX armature's own order and have **no relation to `OVRPlugin.BoneId`**. The real
+Meta hand mesh is fetched from the headset at runtime by **`OVRMesh`** (`OVRPlugin.GetMesh`);
+the FBX is an unused reference asset.
+
+**Corrected approach (supersedes "Approach A / bind the FBX mesh"):** `SkinnedGhostHandView`
+now replicates `OVRMeshRenderer.Initialize()` exactly — it takes a copy of the live hand's
+`OVRMesh.Mesh`, recomputes `bindposes` from the rest rig
+(`bone.worldToLocal * meshRoot.localToWorld * OpenXR-180°Y-fixup`), and skins to our bone
+array in `BoneId` order (the captured order already is). The serialized field changed from
+`_handMesh` (`Mesh`) to **`_ovrMesh` (`OVRMesh`)**, referencing the matching live hand's
+`OVRMesh` (left ghost ← left hand). The FK fallback (`FkGhostHandView`) stays behind the seam.
+
+**Ghost look (new requirement):** live hands render as a **blue** ghost (`M_GhostHands_Blue`)
+during recording; the replay ghost renders **yellow** (`M_GhostHands_Yellow`). Both use the
+existing `GhostHands_URP` Fresnel shader. The live `OVRHandPrefab` hands' material is swapped
+to the blue ghost. (Replaces the single cyan `M_GhostHands`.)
+
+Still device-pending: confirm the corrected mesh skins correctly + the blue/yellow read.
