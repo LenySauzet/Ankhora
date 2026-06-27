@@ -310,7 +310,7 @@ Aucune solution officielle Meta clé-en-main. Approches connues :
 
 **Architecture correcte pour Ankhora** :
 1. Apprenant scanne un QR code (avec n'importe quelle app, ou la Quest camera)
-2. Le QR encode quelque chose comme `meta-launch://AnkhoraApp?masterclass_id=abc123` **interprété par le launcher Meta**, qui appelle `Application.LaunchOtherApp("com.tolkai.ankhora", deeplink_message="masterclass_id=abc123")`
+2. Le QR encode quelque chose comme `meta-launch://AnkhoraApp?masterclass_id=abc123` **interprété par le launcher Meta**, qui appelle `Application.LaunchOtherApp("com.ankhora.app", deeplink_message="masterclass_id=abc123")`
 3. Ankhora reçoit `Notification_ApplicationLifecycle_LaunchIntentChanged`
 4. Lit `ApplicationLifecycle.GetLaunchDetails().DeeplinkMessage`
 5. Parse `masterclass_id`, fetch contenu via API, lance la session

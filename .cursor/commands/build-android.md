@@ -34,7 +34,7 @@ When the user invokes `/build-android`:
 4. Surface the build summary: APK path, size, duration, warning count, error count.
 5. If `install=yes`:
    - `adb install -r <apk-path>` and report exit code.
-   - Suggest `adb shell am start -n com.tolkai.ankhora/com.unity3d.player.UnityPlayerActivity` to launch.
+   - Suggest `adb shell am start -n com.ankhora.app/com.unity3d.player.UnityPlayerActivity` to launch.
 
 ## Arguments
 

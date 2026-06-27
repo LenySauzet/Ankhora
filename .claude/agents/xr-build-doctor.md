@@ -19,7 +19,7 @@ constraints (Mac has no Quest Link; the APK is built on device, never in CI).
   **expected in CI** and non-fatal there (CI runs EditMode tests, not `BuildPlayer`). If you
   see it in a *local device build* on Mac/Windows, it's a different problem — investigate.
 - **Player settings:** scripting backend = IL2CPP, target architecture = ARM64 (not ARMv7),
-  min Android API level matching Quest, correct package name (`com.tolkai.ankhora`).
+  min Android API level matching Quest, correct package name (`com.ankhora.app`).
 - **XR setup:** OpenXR enabled for Android with the Meta feature group; OVRManager/Meta
   loader present. Cross-check with `meta_get_config_information` if the Editor is open.
 - **Manifest/permissions:** hand tracking, passthrough, anchors, mic — only the permissions
