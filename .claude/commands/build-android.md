@@ -49,7 +49,7 @@ Ask only for tokens the user did not provide.
 4. Report the build summary: APK path, size, duration, warning count, error count.
 5. **If installing:** `adb install -r <apk-path>`, report the exit code, then *suggest*
    (do not run) the launch command:
-   `adb shell am start -n com.tolkai.ankhora/com.unity3d.player.UnityPlayerActivity`.
+   `adb shell am start -n com.ankhora.app/com.unity3d.player.UnityPlayerActivity`.
 
 ## Key rules
 

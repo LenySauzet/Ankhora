@@ -1115,7 +1115,7 @@ Add two ghost hand rigs (left/right, hidden), each with a `MetaGhostHandView` (b
 - Confirm the log line `Saved N frames to …/masterclass.json` (N ≈ 5 s × 30 = ~150).
 - Press the play button → translucent ghost hands replay the gesture, smoothly, in place.
 - Toggle passthrough (B/Y) during replay → ghosts remain visible and stable; **90 FPS** held (OVR Metrics / Profiler).
-- Pull the file to confirm persistence: `adb pull /sdcard/Android/data/com.tolkai.ankhora/files/masterclass.json` (path per `persistentDataPath`).
+- Pull the file to confirm persistence: `adb pull /sdcard/Android/data/com.ankhora.app/files/masterclass.json` (path per `persistentDataPath`).
 - If the ghost looks wrong, switch the player's view fields to `DebugJointsHandView` to confirm the data vs the skinning.
 
 - [ ] **Step 6: Commit the scene + open the PR**
