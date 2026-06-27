@@ -68,11 +68,12 @@ namespace Ankhora.Foundation.UI
         {
             if (_mode == Mode.Recording && _dot != null)
             {
-                // Pulse the dot's opacity (unscaled so slow-motion replay never affects the cue).
+                // Pulse the dot's SCALE, not its opacity — a translucent dot would let the real room show
+                // through it (reported on device). The dot stays fully opaque red. Unscaled time so
+                // slow-motion replay never affects the cue.
                 float t = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * _pulseHz * 2f * Mathf.PI);
-                Color c = RecordingColor;
-                c.a = Mathf.Lerp(0.3f, 1f, t);
-                _dot.color = c;
+                float s = Mathf.Lerp(0.7f, 1.1f, t);
+                _dot.rectTransform.localScale = new Vector3(s, s, 1f);
             }
 
             if (_hideAt > 0f && Time.unscaledTime >= _hideAt)
@@ -116,7 +117,9 @@ namespace Ankhora.Foundation.UI
         {
             if (_dot == null)
                 return;
+            color.a = 1f;                       // always opaque; the REC pulse animates scale, not alpha
             _dot.color = color;
+            _dot.rectTransform.localScale = Vector3.one;
             _dot.gameObject.SetActive(visible);
         }
 
