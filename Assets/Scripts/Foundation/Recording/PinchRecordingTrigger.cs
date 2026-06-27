@@ -31,9 +31,12 @@ namespace Ankhora.Foundation.Recording
         [SerializeField] private UnityEvent _onRecordingSaved = new UnityEvent();
         [Tooltip("Raised each second of the countdown with the value to show (3, 2, 1). Hook for future UI.")]
         [SerializeField] private UnityEvent<int> _onCountdownTick = new UnityEvent<int>();
+        [Tooltip("Raised when the countdown ends and recording actually begins — drives the REC indicator.")]
+        [SerializeField] private UnityEvent _onRecordingStarted = new UnityEvent();
 
         public UnityEvent OnRecordingSaved => _onRecordingSaved;
         public UnityEvent<int> OnCountdownTick => _onCountdownTick;
+        public UnityEvent OnRecordingStarted => _onRecordingStarted;
 
         private enum State { Idle, CountingDown, Recording }
 
@@ -106,6 +109,7 @@ namespace Ankhora.Foundation.Recording
             {
                 _state = State.Recording;
                 _session.Begin(now);
+                _onRecordingStarted.Invoke();
                 Debug.Log("[PinchRecordingTrigger] Recording — pinch again to stop.");
                 return;
             }
