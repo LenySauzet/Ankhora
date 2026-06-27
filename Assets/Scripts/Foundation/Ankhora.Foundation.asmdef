@@ -4,7 +4,8 @@
     "references": [
         "Ankhora.Domain",
         "Oculus.VR",
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "UnityEngine.UI"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
