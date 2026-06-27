@@ -109,6 +109,28 @@ How the transport works (per-OS, per-user — **not** committed as a project `.m
 - The Quest is USB-tethered to Lény's Mac and Claude's Bash runs on that Mac, so Claude can drive adb directly: `am force-stop com.ankhora.app; logcat -c; monkey -p com.ankhora.app -c android.intent.category.LAUNCHER 1; sleep N; logcat -d -s Unity`. **Fresh-launch each run** — Unity `Debug.Log` lands under tag `Unity` and `OnEnable`/`Awake` logs only fire on a clean start.
 - `Build And Run` ships a **release** build → `run-as` is denied (`package not debuggable`), so reading `persistentDataPath` files needs a Development Build; `logcat` still shows all `Debug.Log`.
 
+### App icon + name don't show in the Horizon launcher (Horizon OS bug, not ours)
+
+A side-loaded build shows a **generic icon and "app name unavailable"** in the Quest
+launcher (search / recents / Unknown Sources). This is a confirmed regression in Horizon
+OS's **"new navigator"** — the same unchanged APK that displayed correctly before the OS
+update now shows generic (reproduced by Unreal devs too), so it is **OS-side, not
+project-side**. We verified the APK is fully correct: raster `app_icon` embedded at every
+density (adaptive-only XML is **not** rendered by the Horizon launcher, so the icon must be a
+flat **Legacy** raster — set `Ankhora-logo` as Legacy and clear Adaptive/Round), `@string/app_name`
+resolves to "Ankhora", and `android:label`/`android:icon` are declared on **both** `<application>`
+and the launcher `<activity>` (`Assets/Plugins/Android/AndroidManifest.xml`). aapt confirms
+`launchable-activity: label='Ankhora' icon='res/…png'`. Despite all that, the launcher still
+shows generic — **no app-side fix exists**; wait for a Meta OS patch or proper Store
+distribution. A side-loaded app only ever appears under **Unknown Sources** (+ search), never
+in the main App Library grid — that placement is normal, not a bug. Don't burn time
+re-chasing this; the build is correct.
+
+- adb went `unauthorized` with no prompt after a reboot: the headset's **Developer Mode**
+  toggled off (re-enable in the **Meta Horizon phone app** → Devices → headset → Developer Mode),
+  and/or reset the Mac keys (`mv ~/.android/adbkey* …bak; adb kill-server; adb start-server`),
+  then replug **while wearing the headset (screen awake)** to get the USB-debugging prompt.
+
 > First successful Mac → Quest 3 build & run: 2026-06-25 (Lény's station).
 > First end-to-end hands capture → ghost replay on device: 2026-06-27 (Lény's station).
 
