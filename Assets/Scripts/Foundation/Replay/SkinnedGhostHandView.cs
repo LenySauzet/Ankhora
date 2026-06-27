@@ -84,6 +84,10 @@ namespace Ankhora.Foundation.Replay
             // we overwrite its bindposes — mutating the shared instance would corrupt the live hand.
             Mesh mesh = Instantiate(_ovrMesh.Mesh);
 
+            // Bake the wrist-fade gradient into this copy's vertex-colour alpha so the ghost fades at the
+            // wrist (GhostHands_URP reads COLOR.a). Geometry-based, independent of the mesh UVs/glow mask.
+            WristFadeBake.Apply(mesh);
+
             var go = new GameObject("GhostMesh");
             go.transform.SetParent(transform, false);   // identity under the wrist root = the mesh frame
             _renderer = go.AddComponent<SkinnedMeshRenderer>();

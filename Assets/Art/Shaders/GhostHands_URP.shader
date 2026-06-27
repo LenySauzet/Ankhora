@@ -10,11 +10,11 @@ Shader "Ankhora/GhostHands_URP"
     //      runs ZTest LEqual so only the nearest surface shades per pixel. Overlapping translucent layers
     //      (thumb over fingers) no longer compound their alpha, and you no longer see the BACK of the hand
     //      or the real room through the volume.
-    //   2. WRIST FADE samples Meta's baked gradient mask (_FingerGlowMask) at FORCED LOD 0, in the vertex
-    //      shader, exactly like Meta (tex2Dlod). The wrist/forearm maps to a small low-alpha UV island;
-    //      with automatic mip selection that island averages toward opaque when the hand is small on screen
-    //      (mipMapsPreserveCoverage is off on the source texture), which is why the fade vanished on device
-    //      while looking fine in the close-up editor preview. LOD 0 keeps the island intact.
+    //   2. WRIST FADE comes from VERTEX-COLOUR ALPHA, baked per-vertex from mesh geometry by
+    //      Ankhora.Domain.Spatial.WristFadeGradient (0 at the wrist stump -> 1 across the hand). Two earlier
+    //      attempts using Meta's UV glow-mask never faded on device (the runtime mesh's UVs could not be
+    //      trusted); the geometry bake is deterministic and validated on the real mesh. If a mesh carries no
+    //      vertex colours, COLOR defaults to opaque white -> the hand stays fully opaque (safe, not invisible).
     // Single-pass-instanced safe (stereo). No scene-colour / refraction (tiled mobile GPU).
     Properties
     {
@@ -26,8 +26,6 @@ Shader "Ankhora/GhostHands_URP"
         [Range(0,1)] _RimAlpha ("Rim Adds Opacity", float) = 0.7
         [Range(0,1)] _CoreBrightness ("Core Form Shading", float) = 0.4
         _LightDirection ("Soft Light Direction", Vector) = (0.3, 0.55, -0.75, 0)
-        [NoScaleOffset] _FingerGlowMask ("Wrist Gradient (Meta mask)", 2D) = "white" {}
-        [Range(0,1)] _WristFade ("Wrist Fade Bias", float) = 0.30
     }
 
     SubShader
@@ -102,9 +100,6 @@ Shader "Ankhora/GhostHands_URP"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-            TEXTURE2D(_FingerGlowMask);
-            SAMPLER(sampler_FingerGlowMask);
-
             CBUFFER_START(UnityPerMaterial)
                 float4 _FillColor;
                 float4 _RimColor;
@@ -114,14 +109,13 @@ Shader "Ankhora/GhostHands_URP"
                 float _RimAlpha;
                 float _CoreBrightness;
                 float4 _LightDirection;
-                float _WristFade;
             CBUFFER_END
 
             struct Attributes
             {
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
-                float2 uv : TEXCOORD0;
+                float4 color : COLOR;         // alpha = baked wrist-fade gradient (0 wrist .. 1 hand)
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -130,7 +124,7 @@ Shader "Ankhora/GhostHands_URP"
                 float4 positionHCS : SV_POSITION;
                 float3 normalWS : TEXCOORD0;
                 float3 viewDirWS : TEXCOORD1;
-                half wristMask : TEXCOORD2;   // mask alpha sampled at LOD 0 (vertex), like Meta
+                half wristFade : TEXCOORD2;   // vertex-colour alpha
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -147,8 +141,7 @@ Shader "Ankhora/GhostHands_URP"
                 OUT.positionHCS = p.positionCS;
                 OUT.normalWS = n.normalWS;
                 OUT.viewDirWS = GetWorldSpaceViewDir(p.positionWS);
-                // FORCED LOD 0: keep the small low-alpha wrist island from averaging away at distance.
-                OUT.wristMask = SAMPLE_TEXTURE2D_LOD(_FingerGlowMask, sampler_FingerGlowMask, IN.uv, 0).a;
+                OUT.wristFade = IN.color.a;
                 return OUT;
             }
 
@@ -171,10 +164,9 @@ Shader "Ankhora/GhostHands_URP"
                 half3 body = _FillColor.rgb * form;
                 half3 col = body + _RimColor.rgb * fres * _RimIntensity;
 
-                // Wrist gradient from Meta's baked mask (alpha -> 0 at the wrist UV island).
-                half fade = saturate(IN.wristMask + _WristFade);
-
-                half alpha = fade * saturate(_FillOpacity + fres * _RimAlpha);
+                // Wrist gradient baked into vertex-colour alpha (0 at the stump). It multiplies the whole
+                // alpha, so the bright rim fades out at the wrist too rather than leaving a hard edge.
+                half alpha = IN.wristFade * saturate(_FillOpacity + fres * _RimAlpha);
                 return half4(col, alpha);
             }
             ENDHLSL
