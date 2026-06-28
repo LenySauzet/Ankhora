@@ -30,7 +30,8 @@ namespace Ankhora.Foundation.Replay
         [SerializeField] private OVRMesh _ovrMesh;
         [SerializeField] private Material _ghostMaterial;
 
-        private Transform[] _bones;     // index-aligned with captured boneRotations; _bones[0] == this.transform
+        private Transform[] _bones;     // index-aligned with captured boneRotations; _bones[_rootIndex] == this.transform
+        private int _rootIndex;         // topological root bone (the wrist in OpenXR hands), NOT necessarily 0
         private SkinnedMeshRenderer _renderer;
         private bool _built;
 
@@ -57,13 +58,17 @@ namespace Ankhora.Foundation.Replay
         private void BuildRig(HandSkeleton s)
         {
             int n = s.boneParents.Length;
+            _rootIndex = s.RootBoneIndex;   // the wrist in OpenXR hands (index 1), not the palm (index 0)
             _bones = new Transform[n];
-            _bones[0] = transform; // wrist container; positioned by Apply from the tracking-space root
 
-            for (int i = 1; i < n; i++)
+            // this.transform is the SKELETON-ROOT FRAME (the anchor Apply drives), NOT a bone — it mirrors
+            // Meta's _bonesGO. EVERY bone, including the wrist root, is a real child carrying its bind pose,
+            // so the rig's rest equals the live skeleton's rest and the mesh skins correctly. The root bone
+            // (invalid parent) parents to this.transform; all others per the captured topology.
+            for (int i = 0; i < n; i++)
                 _bones[i] = new GameObject($"Bone_{i}").transform;
 
-            for (int i = 1; i < n; i++)
+            for (int i = 0; i < n; i++)
             {
                 int p = s.boneParents[i];
                 Transform parent = (p >= 0 && p < n) ? _bones[p] : transform;
@@ -89,7 +94,7 @@ namespace Ankhora.Foundation.Replay
             WristFadeBake.Apply(mesh);
 
             var go = new GameObject("GhostMesh");
-            go.transform.SetParent(transform, false);   // identity under the wrist root = the mesh frame
+            go.transform.SetParent(transform, false);   // identity under the skeleton-root frame = mesh frame (Meta's meshRoot)
             _renderer = go.AddComponent<SkinnedMeshRenderer>();
 
             int n = _bones.Length;
@@ -107,7 +112,7 @@ namespace Ankhora.Foundation.Replay
 
             _renderer.sharedMesh = mesh;
             _renderer.bones = _bones;               // captured BoneId order == the mesh's blend-index order
-            _renderer.rootBone = _bones[0];
+            _renderer.rootBone = _bones[_rootIndex];   // the wrist anchor, not the palm (index 0)
             _renderer.localBounds = new Bounds(Vector3.zero, Vector3.one * 0.4f); // hand-sized; avoids culling pops
             _renderer.updateWhenOffscreen = true;
             if (_ghostMaterial != null)
@@ -120,19 +125,29 @@ namespace Ankhora.Foundation.Replay
                 _renderer.enabled = visible;
         }
 
-        public void Apply(in Pose root, Quaternion[] boneRotations, int boneCount)
+        public void Apply(in Pose root, Quaternion[] boneRotations, Vector3[] boneLocalPositions, int boneCount)
         {
             if (_bones == null || boneRotations == null)
                 return;
 
-            // Wrist (bone 0): placed from the tracking-space root (carries the hand's gross motion).
+            // this.transform is the skeleton-root frame: placed from the captured root pose, which carries
+            // the hand's gross motion through the room.
             transform.localPosition = root.position;
             transform.localRotation = root.rotation;
 
+            // Drive BOTH local rotation and local position for EVERY bone (the wrist root included — it is a
+            // real child of the anchor here). Position is a small refinement (the offsets are near-rigid);
+            // when absent (legacy recording) bones keep the rest bind offsets set in BuildRig.
+            bool hasPos = boneLocalPositions != null;
             int n = Mathf.Min(_bones.Length, boneCount);
-            for (int i = 1; i < n; i++)
-                if (_bones[i] != null)
-                    _bones[i].localRotation = boneRotations[i];
+            for (int i = 0; i < n; i++)
+            {
+                if (_bones[i] == null)
+                    continue;
+                _bones[i].localRotation = boneRotations[i];
+                if (hasPos && i < boneLocalPositions.Length)
+                    _bones[i].localPosition = boneLocalPositions[i];
+            }
         }
     }
 }

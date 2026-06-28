@@ -24,5 +24,26 @@ namespace Ankhora.Domain.Model
         public bool IsValid =>
             boneParents != null && boneBindPoses != null &&
             boneParents.Length == boneBindPoses.Length && boneParents.Length > 0;
+
+        /// <summary>
+        /// Index of the topological root bone — the one with no valid parent (a parent index out of
+        /// <c>[0, count)</c>; OVRPlugin uses a negative or out-of-range sentinel). The OpenXR 26-joint hand
+        /// is rooted at the WRIST (index 1), not the palm (index 0); assuming index 0 mis-anchors the whole
+        /// rig by the palm→wrist distance (~70 mm). Returns 0 when there is no clear single root (legacy/
+        /// degenerate skeletons), preserving the old behaviour.
+        /// </summary>
+        public int RootBoneIndex => FindRootBoneIndex(boneParents);
+
+        /// <summary>Pure root finder shared by capture and replay so both anchor the same bone.</summary>
+        public static int FindRootBoneIndex(int[] parents)
+        {
+            if (parents == null)
+                return 0;
+            int n = parents.Length;
+            for (int i = 0; i < n; i++)
+                if (parents[i] < 0 || parents[i] >= n)
+                    return i;
+            return 0;
+        }
     }
 }
