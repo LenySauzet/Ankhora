@@ -162,10 +162,11 @@ Shader "Ankhora/GhostHands_URP"
                 half fres = pow(saturate(1.0 - saturate(dot(N, V))), _RimPower);
 
                 half3 body = _FillColor.rgb * form;
-                // Fade the bright rim glow by the wrist gradient too: otherwise the white Fresnel rim stays
-                // vivid in the transition zone and reads as a lit "reflection" on the dissolving stump, even
-                // though the fill there is transparent.
-                half3 col = body + _RimColor.rgb * fres * _RimIntensity * IN.wristFade;
+                // Fade the bright rim glow by the SQUARED wrist gradient: a linear fade still left a faint
+                // lit "reflection" on the dissolving stump, so attenuate it faster than the fill so the glow
+                // is gone well before the silhouette does.
+                half rimFade = IN.wristFade * IN.wristFade;
+                half3 col = body + _RimColor.rgb * fres * _RimIntensity * rimFade;
 
                 // Wrist gradient baked into vertex-colour alpha (0 at the stump), multiplies the whole alpha.
                 half alpha = IN.wristFade * saturate(_FillOpacity + fres * _RimAlpha);
