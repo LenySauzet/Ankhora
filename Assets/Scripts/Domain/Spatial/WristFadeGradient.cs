@@ -18,7 +18,7 @@ namespace Ankhora.Domain.Spatial
     {
         /// <param name="bandStart">Fraction of the hand length over which it stays fully transparent (the very stump).</param>
         /// <param name="bandEnd">Fraction by which it reaches fully opaque.</param>
-        public static float[] Compute(Vector3[] vertices, float bandStart = 0.02f, float bandEnd = 0.34f)
+        public static float[] Compute(Vector3[] vertices, float bandStart = 0.08f, float bandEnd = 0.46f)
         {
             int n = vertices?.Length ?? 0;
             var fade = new float[n];

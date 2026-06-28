@@ -165,11 +165,15 @@ Shader "Ankhora/GhostHands_URP"
                 // Fade the bright rim glow by the SQUARED wrist gradient: a linear fade still left a faint
                 // lit "reflection" on the dissolving stump, so attenuate it faster than the fill so the glow
                 // is gone well before the silhouette does.
-                half rimFade = IN.wristFade * IN.wristFade;
-                half3 col = body + _RimColor.rgb * fres * _RimIntensity * rimFade;
+                half wf = IN.wristFade;
+                half wf2 = wf * wf;
+                half3 col = body + _RimColor.rgb * fres * _RimIntensity * wf2;
 
-                // Wrist gradient baked into vertex-colour alpha (0 at the stump), multiplies the whole alpha.
-                half alpha = IN.wristFade * saturate(_FillOpacity + fres * _RimAlpha);
+                // Alpha: the Fresnel boost (fres * _RimAlpha) inflates opacity on the grazing, near-vertical
+                // wall of the wrist stump cap — that was the bright ring at the cut. Drive that boost by wf^2
+                // too, leaving only the soft fill (wf * _FillOpacity) near the base, so the cap fades out
+                // cleanly to nothing instead of ringing.
+                half alpha = saturate(wf * _FillOpacity + wf2 * fres * _RimAlpha);
                 return half4(col, alpha);
             }
             ENDHLSL
