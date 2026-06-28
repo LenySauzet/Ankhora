@@ -1812,6 +1812,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1813997052}
   - component: {fileID: 1813997051}
+  - component: {fileID: 1813997053}
   m_Layer: 0
   m_Name: MasterclassRecorder
   m_TagString: Untagged
@@ -1850,6 +1851,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1813997053
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1813997049}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd5e390a145f243b89ca1f727bc244de, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Ankhora.Foundation::Ankhora.Foundation.Diagnostics.HandRigDiagnostics
+  _leftSkeleton: {fileID: 1366158630}
+  _rightSkeleton: {fileID: 398599882}
+  _logIntervalSeconds: 1
 --- !u!21 &1876542718
 Material:
   serializedVersion: 8
