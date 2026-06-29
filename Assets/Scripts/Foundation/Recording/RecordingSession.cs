@@ -45,8 +45,8 @@ namespace Ankhora.Foundation.Recording
         {
             CaptureSkeleton();
             _source.TryGetHead(out Pose head);
-            if (!_source.TryGetHand(false, ref _left)) _left.boneRotations = null;
-            if (!_source.TryGetHand(true, ref _right)) _right.boneRotations = null;
+            if (!_source.TryGetHand(false, ref _left)) { _left.boneRotations = null; _left.boneLocalPositions = null; }
+            if (!_source.TryGetHand(true, ref _right)) { _right.boneRotations = null; _right.boneLocalPositions = null; }
             _recorder.Push(now, head, _left, _right);
         }
 

@@ -3,7 +3,9 @@
     "rootNamespace": "Ankhora.Foundation",
     "references": [
         "Ankhora.Domain",
-        "Oculus.VR"
+        "Oculus.VR",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

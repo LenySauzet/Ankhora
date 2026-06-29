@@ -21,8 +21,10 @@ namespace Ankhora.Foundation.Replay
 
         /// <summary>
         /// Apply a sampled pose: <paramref name="root"/> wrist pose + the first
-        /// <paramref name="boneCount"/> local bone rotations from <paramref name="boneRotations"/>.
+        /// <paramref name="boneCount"/> local bone rotations from <paramref name="boneRotations"/> and,
+        /// when non-null, local positions from <paramref name="boneLocalPositions"/>. A null positions
+        /// buffer means "keep the rest bind offsets" (legacy recordings without per-frame positions).
         /// </summary>
-        void Apply(in Pose root, Quaternion[] boneRotations, int boneCount);
+        void Apply(in Pose root, Quaternion[] boneRotations, Vector3[] boneLocalPositions, int boneCount);
     }
 }

@@ -21,7 +21,7 @@ namespace Ankhora.Foundation.Replay
         [SerializeField] private Material _jointMaterial;
         [SerializeField, Min(0.001f)] private float _jointRadius = 0.008f;
 
-        private Transform[] _bones;     // index-aligned with captured boneRotations; _bones[0] == this.transform
+        private Transform[] _bones;     // captured-order bone transforms, all children of this.transform (the anchor)
         private GameObject[] _joints;   // one joint sphere per bone, toggled by Show()
         private bool _built;
 
@@ -39,12 +39,14 @@ namespace Ankhora.Foundation.Replay
             int n = s.boneParents.Length;
             _bones = new Transform[n];
             _joints = new GameObject[n];
-            _bones[0] = transform; // wrist container; positioned by Apply from the tracking-space root
 
-            for (int i = 1; i < n; i++)
+            // this.transform is the skeleton-root frame (the anchor Apply drives), NOT a bone. EVERY bone,
+            // including the wrist root, is a real child carrying its bind pose; the root bone (invalid
+            // parent) parents to this.transform, all others per the captured topology.
+            for (int i = 0; i < n; i++)
                 _bones[i] = new GameObject($"Bone_{i}").transform;
 
-            for (int i = 1; i < n; i++)
+            for (int i = 0; i < n; i++)
             {
                 int p = s.boneParents[i];
                 Transform parent = (p >= 0 && p < n) ? _bones[p] : transform;
@@ -82,20 +84,26 @@ namespace Ankhora.Foundation.Replay
                     _joints[i].SetActive(visible);
         }
 
-        public void Apply(in Pose root, Quaternion[] boneRotations, int boneCount)
+        public void Apply(in Pose root, Quaternion[] boneRotations, Vector3[] boneLocalPositions, int boneCount)
         {
             if (_bones == null || boneRotations == null)
                 return;
 
-            // Wrist (bone 0): placed from the tracking-space root. This object is parented under the
-            // rig's tracking-space anchor, so the root's local pose maps directly.
+            // this.transform is the skeleton-root frame: placed from the captured root pose, which carries
+            // the hand's gross motion through the room.
             transform.localPosition = root.position;
             transform.localRotation = root.rotation;
 
+            bool hasPos = boneLocalPositions != null;
             int n = Mathf.Min(_bones.Length, boneCount);
-            for (int i = 1; i < n; i++)
-                if (_bones[i] != null)
-                    _bones[i].localRotation = boneRotations[i];
+            for (int i = 0; i < n; i++)
+            {
+                if (_bones[i] == null)
+                    continue;
+                _bones[i].localRotation = boneRotations[i];
+                if (hasPos && i < boneLocalPositions.Length)
+                    _bones[i].localPosition = boneLocalPositions[i];
+            }
         }
     }
 }

@@ -27,6 +27,8 @@ namespace Ankhora.Foundation.Replay
         private Timeline _timeline;
         private Quaternion[] _leftBones;
         private Quaternion[] _rightBones;
+        private Vector3[] _leftBonePositions;
+        private Vector3[] _rightBonePositions;
         private float _clock;
         private bool _playing;
         private bool _leftTracked;
@@ -57,19 +59,19 @@ namespace Ankhora.Foundation.Replay
                 else { Stop(); return; }
             }
 
-            _leftTracked = DriveHand(_leftView, rightHand: false, _leftBones, _leftTracked);
-            _rightTracked = DriveHand(_rightView, rightHand: true, _rightBones, _rightTracked);
+            _leftTracked = DriveHand(_leftView, rightHand: false, _leftBones, _leftBonePositions, _leftTracked);
+            _rightTracked = DriveHand(_rightView, rightHand: true, _rightBones, _rightBonePositions, _rightTracked);
         }
 
-        private bool DriveHand(IHandView view, bool rightHand, Quaternion[] buffer, bool wasTracked)
+        private bool DriveHand(IHandView view, bool rightHand, Quaternion[] buffer, Vector3[] positions, bool wasTracked)
         {
             if (view == null || buffer == null)
                 return false;
-            bool tracked = TimelineSampler.SampleHand(_timeline, _clock, rightHand, buffer, out Pose root);
+            bool tracked = TimelineSampler.SampleHand(_timeline, _clock, rightHand, buffer, positions, out Pose root);
             if (tracked != wasTracked)        // toggle visibility only on a track/untrack transition
                 view.Show(tracked);
             if (tracked)
-                view.Apply(root, buffer, buffer.Length);
+                view.Apply(root, buffer, positions, buffer.Length);
             return tracked;
         }
 
@@ -123,6 +125,29 @@ namespace Ankhora.Foundation.Replay
                 _leftBones = new Quaternion[needed];
                 _rightBones = new Quaternion[needed];
             }
+
+            // Allocate position buffers only if the recording actually carries per-frame bone positions;
+            // otherwise leave them null so replay falls back to the rest bind offsets (legacy recordings).
+            bool hasPositions = TimelineHasBonePositions(timeline);
+            if (hasPositions && (_leftBonePositions == null || _leftBonePositions.Length < needed))
+            {
+                _leftBonePositions = new Vector3[needed];
+                _rightBonePositions = new Vector3[needed];
+            }
+            else if (!hasPositions)
+            {
+                _leftBonePositions = null;
+                _rightBonePositions = null;
+            }
+        }
+
+        private static bool TimelineHasBonePositions(Timeline timeline)
+        {
+            if (timeline.frames.Count == 0)
+                return false;
+            PoseFrame f = timeline.frames[0];
+            return (f.leftHand.boneLocalPositions?.Length ?? 0) > 0 ||
+                   (f.rightHand.boneLocalPositions?.Length ?? 0) > 0;
         }
 
         private static int BoneCount(HandSkeleton s) => s != null && s.IsValid ? s.boneParents.Length : 0;

@@ -40,21 +40,52 @@ namespace Ankhora.Foundation.Recording
             if (skeleton == null || !skeleton.IsDataValid || !skeleton.IsDataHighConfidence)
                 return false;
 
-            var bones = skeleton.Bones;                 // IList<OVRBone>; index 0 == Hand_WristRoot
+            var bones = skeleton.Bones;                 // IList<OVRBone>
             int count = bones.Count;
             if (count == 0)
                 return false;
 
-            Transform wrist = bones[0].Transform;
-            // Wrist in tracking space: the bone's own local pose is ~constant (the rig anchor carries
-            // the gross motion), so we must read its WORLD transform and reframe it.
-            pose.root = PoseSpace.RelativeTo(ReferencePose, new Pose(wrist.position, wrist.rotation));
+            // Anchor on the SKELETON-ROOT FRAME (the parent of the topological root bone — Meta's
+            // "_bonesGO", which OVRSkeleton drives to the hand RootPose), NOT on a bone. Replay rebuilds
+            // the full bone hierarchy under this frame exactly like the live skeleton, so the skinned mesh
+            // matches. The OpenXR hand's root bone is the WRIST (index 1), not the palm (index 0); reading
+            // bones[0] mis-anchors the whole hand by ~70 mm, and reading the wrist bone itself double-counts
+            // the wrist's local pose against the rebuilt rig.
+            int rootIdx = RootBoneIndex(bones);
+            Transform rootBone = bones[rootIdx].Transform;
+            Transform frame = rootBone.parent != null ? rootBone.parent : rootBone;
+            // Read its WORLD transform (the frame carries the gross motion through the room) and reframe it
+            // so the recording survives recentering.
+            pose.root = PoseSpace.RelativeTo(ReferencePose, new Pose(frame.position, frame.rotation));
 
             if (pose.boneRotations == null || pose.boneRotations.Length != count)
                 pose.boneRotations = new Quaternion[count];
+            if (pose.boneLocalPositions == null || pose.boneLocalPositions.Length != count)
+                pose.boneLocalPositions = new Vector3[count];
+            // Capture BOTH local rotation and local position per frame: Meta's OpenXR hand path recomputes
+            // each bone's local position every frame (fitted to the user's hand), so rotation-only replay
+            // onto the generic rest offsets diverges from the live hand. See HandPose.boneLocalPositions.
             for (int i = 0; i < count; i++)
-                pose.boneRotations[i] = bones[i].Transform.localRotation;
+            {
+                Transform t = bones[i].Transform;
+                pose.boneRotations[i] = t.localRotation;
+                pose.boneLocalPositions[i] = t.localPosition;
+            }
             return true;
+        }
+
+        // The topological root = the bone whose ParentBoneIndex is invalid (out of [0, count)). Mirrors
+        // HandSkeleton.FindRootBoneIndex so capture and replay anchor the same bone. Falls back to 0.
+        private static int RootBoneIndex(System.Collections.Generic.IList<OVRBone> bones)
+        {
+            int count = bones.Count;
+            for (int i = 0; i < count; i++)
+            {
+                int p = bones[i].ParentBoneIndex;
+                if (p < 0 || p >= count)
+                    return i;
+            }
+            return 0;
         }
 
         /// <summary>

@@ -60,13 +60,26 @@ namespace Ankhora.Domain.Sampling
         }
 
         /// <summary>
-        /// Samples one hand at time <paramref name="t"/> into the caller-owned <paramref name="into"/>
-        /// array (no allocation), returning whether the hand is tracked there. Clamps to the first/last
-        /// frame outside the range; interpolates root (lerp/slerp) and each bone rotation (slerp) between
-        /// the two bracketing frames. When only one bracketing frame has the hand tracked, uses that one;
-        /// when neither does, returns false and leaves <paramref name="into"/> untouched.
+        /// Rotation-only overload (no per-bone positions). Equivalent to passing a null position buffer.
         /// </summary>
-        public static bool SampleHand(Timeline timeline, float t, bool rightHand, Quaternion[] into, out Pose root)
+        public static bool SampleHand(Timeline timeline, float t, bool rightHand, Quaternion[] into, out Pose root) =>
+            SampleHand(timeline, t, rightHand, into, null, out root);
+
+        /// <summary>
+        /// Samples one hand at time <paramref name="t"/> into the caller-owned <paramref name="intoRot"/>
+        /// (and, when non-null, <paramref name="intoPos"/>) arrays — no allocation — returning whether the
+        /// hand is tracked there. Clamps to the first/last frame outside the range; interpolates root
+        /// (lerp/slerp), each bone rotation (slerp) and each bone local position (lerp) between the two
+        /// bracketing frames. When only one bracketing frame has the hand tracked, uses that one; when
+        /// neither does, returns false and leaves the buffers untouched.
+        /// <para>
+        /// <paramref name="intoPos"/> is filled only when the source frames carry
+        /// <see cref="HandPose.boneLocalPositions"/>; on legacy position-less frames it is left untouched so
+        /// the view keeps its rest bind offsets (replay still works, just without the per-frame correction).
+        /// </para>
+        /// </summary>
+        public static bool SampleHand(Timeline timeline, float t, bool rightHand,
+            Quaternion[] intoRot, Vector3[] intoPos, out Pose root)
         {
             root = default;
             var frames = timeline?.frames;
@@ -75,9 +88,9 @@ namespace Ankhora.Domain.Sampling
 
             int lastIndex = frames.Count - 1;
             if (t <= frames[0].t)
-                return EmitHand(HandOf(frames[0], rightHand), into, out root);
+                return EmitHand(HandOf(frames[0], rightHand), intoRot, intoPos, out root);
             if (t >= frames[lastIndex].t)
-                return EmitHand(HandOf(frames[lastIndex], rightHand), into, out root);
+                return EmitHand(HandOf(frames[lastIndex], rightHand), intoRot, intoPos, out root);
 
             int lo = 0;
             int hi = lastIndex;
@@ -100,9 +113,9 @@ namespace Ankhora.Domain.Sampling
             if (!ta && !tb)
                 return false;
             if (ta && !tb)
-                return EmitHand(a, into, out root);
+                return EmitHand(a, intoRot, intoPos, out root);
             if (!ta)
-                return EmitHand(b, into, out root);
+                return EmitHand(b, intoRot, intoPos, out root);
 
             float span = fb.t - fa.t;
             float u = span > 0f ? (t - fa.t) / span : 0f;
@@ -110,9 +123,16 @@ namespace Ankhora.Domain.Sampling
                 Vector3.LerpUnclamped(a.root.position, b.root.position, u),
                 Quaternion.SlerpUnclamped(a.root.rotation, b.root.rotation, u));
 
-            int n = Mathf.Min(into.Length, Mathf.Min(a.boneRotations.Length, b.boneRotations.Length));
+            int n = Mathf.Min(intoRot.Length, Mathf.Min(a.boneRotations.Length, b.boneRotations.Length));
             for (int i = 0; i < n; i++)
-                into[i] = Quaternion.SlerpUnclamped(a.boneRotations[i], b.boneRotations[i], u);
+                intoRot[i] = Quaternion.SlerpUnclamped(a.boneRotations[i], b.boneRotations[i], u);
+
+            if (intoPos != null && HasPositions(a) && HasPositions(b))
+            {
+                int m = Mathf.Min(intoPos.Length, Mathf.Min(a.boneLocalPositions.Length, b.boneLocalPositions.Length));
+                for (int i = 0; i < m; i++)
+                    intoPos[i] = Vector3.LerpUnclamped(a.boneLocalPositions[i], b.boneLocalPositions[i], u);
+            }
             return true;
         }
 
@@ -120,16 +140,25 @@ namespace Ankhora.Domain.Sampling
 
         private static bool IsTracked(in HandPose h) => h.boneRotations != null && h.boneRotations.Length > 0;
 
-        private static bool EmitHand(HandPose h, Quaternion[] into, out Pose root)
+        private static bool HasPositions(in HandPose h) => h.boneLocalPositions != null && h.boneLocalPositions.Length > 0;
+
+        private static bool EmitHand(HandPose h, Quaternion[] intoRot, Vector3[] intoPos, out Pose root)
         {
             root = default;
             if (!IsTracked(h))
                 return false;
 
             root = h.root;
-            int n = Mathf.Min(into.Length, h.boneRotations.Length);
+            int n = Mathf.Min(intoRot.Length, h.boneRotations.Length);
             for (int i = 0; i < n; i++)
-                into[i] = h.boneRotations[i];
+                intoRot[i] = h.boneRotations[i];
+
+            if (intoPos != null && HasPositions(h))
+            {
+                int m = Mathf.Min(intoPos.Length, h.boneLocalPositions.Length);
+                for (int i = 0; i < m; i++)
+                    intoPos[i] = h.boneLocalPositions[i];
+            }
             return true;
         }
     }

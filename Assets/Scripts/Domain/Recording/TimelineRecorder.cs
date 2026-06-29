@@ -59,8 +59,9 @@ namespace Ankhora.Domain.Recording
         }
 
         // Capture sources reuse one bone array per hand across frames, so the recorder must snapshot
-        // the rotations per frame — storing the live reference would alias every frame to the last pose.
-        // Capture runs at the sample rate (~30 Hz), not the replay hot loop, so a per-frame clone is fine.
+        // the rotations AND positions per frame — storing the live reference would alias every frame to
+        // the last pose. Capture runs at the sample rate (~30 Hz), not the replay hot loop, so a per-frame
+        // clone is fine.
         private static HandPose CloneHand(in HandPose hand)
         {
             return new HandPose
@@ -69,6 +70,9 @@ namespace Ankhora.Domain.Recording
                 boneRotations = hand.boneRotations == null
                     ? null
                     : (Quaternion[])hand.boneRotations.Clone(),
+                boneLocalPositions = hand.boneLocalPositions == null
+                    ? null
+                    : (Vector3[])hand.boneLocalPositions.Clone(),
             };
         }
 
