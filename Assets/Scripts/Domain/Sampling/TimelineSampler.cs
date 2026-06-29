@@ -144,14 +144,22 @@ namespace Ankhora.Domain.Sampling
         /// offset the channel was added to fix.
         /// </summary>
         public static bool HasBoneLocalPositions(Timeline timeline)
+            => HasBoneLocalPositions(timeline, rightHand: false) || HasBoneLocalPositions(timeline, rightHand: true);
+
+        /// <summary>
+        /// Per-hand variant: true when ANY frame carries per-bone local positions for the given hand. The
+        /// player allocates each hand's position buffer independently from this, so a take where only one
+        /// hand ever carries positions leaves the other hand's buffer null (replay keeps its rest bind
+        /// offsets) rather than driving it with stale zeros.
+        /// </summary>
+        public static bool HasBoneLocalPositions(Timeline timeline, bool rightHand)
         {
             var frames = timeline?.frames;
             if (frames == null)
                 return false;
             for (int i = 0; i < frames.Count; i++)
             {
-                PoseFrame f = frames[i];
-                if (HasPositions(f.leftHand) || HasPositions(f.rightHand))
+                if (HasPositions(HandOf(frames[i], rightHand)))
                     return true;
             }
             return false;
