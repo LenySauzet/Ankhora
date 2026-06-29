@@ -100,7 +100,8 @@ namespace Ankhora.Foundation.Replay
             if (_voicePlayer != null)
             {
                 VoiceTrack vt = _timeline.voiceTrack;
-                if (vt != null && vt.HasClip && _store.ReadBlob(vt.clipRef, out byte[] wav, out string vErr))
+                string vErr = null;   // pre-assigned: ReadBlob is short-circuited when vt is null/clip-less, so the else-branch use below isn't definitely-assigned otherwise
+                if (vt != null && vt.HasClip && _store.ReadBlob(vt.clipRef, out byte[] wav, out vErr))
                     _voicePlayer.Load(wav, vt);
                 else
                 {
