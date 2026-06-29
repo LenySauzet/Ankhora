@@ -57,6 +57,14 @@ namespace Ankhora.Foundation.Recording
         public bool SaveTo(MasterclassStore store, float now, out int frameCount, out string error)
         {
             Timeline timeline = _recorder.Finish(now);
+            if (timeline == null)
+            {
+                // Finish returns null when Begin was never called. Unreachable via the current trigger,
+                // but SaveTo is public — fail cleanly instead of NPE'ing for a future caller.
+                frameCount = 0;
+                error = "Recording was never started.";
+                return false;
+            }
             timeline.leftSkeleton = _leftSkeleton;
             timeline.rightSkeleton = _rightSkeleton;
             frameCount = timeline.frames.Count;

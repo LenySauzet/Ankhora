@@ -45,9 +45,19 @@ one responsibility per type; `Domain` stays genuinely cross-cutting (no feature-
 **Cross-feature wiring:** feature folders inside `Foundation` still must not reference each other
 directly (e.g. `Recording` must not `using Ankhora.Foundation.Replay`). When two features must be
 connected, a **composition-root component** in `Foundation/App/` does the wiring (e.g.
-`FirstLightReplayLink` subscribes the recorder's `OnRecordingSaved` event to the player). This keeps
+`RecordReplayLink` subscribes the recorder's `OnRecordingSaved` event to the player). This keeps
 the no-cross-feature-dependency intent of ADR-0003 without per-feature assemblies — enforced by
 convention, not by the compiler.
+
+**UI is a presentation layer, not a peer feature (exception).** `Foundation/UI` may *observe* a
+feature by holding an inspector-wired (`[SerializeField]`) reference to it and subscribing to its
+events one-way (e.g. `RecordingHud` reads `PinchRecordingTrigger`'s `OnCountdownTick` /
+`OnRecordingStarted` / `OnRecordingSaved`). This is a read-only presentation dependency, not the
+peer-to-peer *logic* coupling the rule above forbids — routing every HUD through the composition root
+would add indirection for no boundary benefit. The constraints: the dependency is **one-way**
+(feature → UI never UI → feature beyond invoking the feature's own public API), UI holds **no
+business logic**, and a feature must never `using Ankhora.Foundation.UI`. Two non-UI feature folders
+wanting to talk to each other still go through `Foundation/App/`.
 
 ## Considered options
 

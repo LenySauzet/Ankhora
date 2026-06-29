@@ -128,7 +128,7 @@ namespace Ankhora.Foundation.Replay
 
             // Allocate position buffers only if the recording actually carries per-frame bone positions;
             // otherwise leave them null so replay falls back to the rest bind offsets (legacy recordings).
-            bool hasPositions = TimelineHasBonePositions(timeline);
+            bool hasPositions = TimelineSampler.HasBoneLocalPositions(timeline);
             if (hasPositions && (_leftBonePositions == null || _leftBonePositions.Length < needed))
             {
                 _leftBonePositions = new Vector3[needed];
@@ -139,15 +139,6 @@ namespace Ankhora.Foundation.Replay
                 _leftBonePositions = null;
                 _rightBonePositions = null;
             }
-        }
-
-        private static bool TimelineHasBonePositions(Timeline timeline)
-        {
-            if (timeline.frames.Count == 0)
-                return false;
-            PoseFrame f = timeline.frames[0];
-            return (f.leftHand.boneLocalPositions?.Length ?? 0) > 0 ||
-                   (f.rightHand.boneLocalPositions?.Length ?? 0) > 0;
         }
 
         private static int BoneCount(HandSkeleton s) => s != null && s.IsValid ? s.boneParents.Length : 0;
