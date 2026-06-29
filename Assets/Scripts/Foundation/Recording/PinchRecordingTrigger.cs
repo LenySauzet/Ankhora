@@ -22,6 +22,7 @@ namespace Ankhora.Foundation.Recording
         [Tooltip("The non-dominant hand whose index pinch arms/stops the take.")]
         [SerializeField] private OVRHand _triggerHand;
         [SerializeField] private MonoBehaviour _poseSourceBehaviour;   // implements IHandPoseSource
+        [SerializeField] private MonoBehaviour _voiceSourceBehaviour;  // implements IVoiceCaptureSource (optional)
         [SerializeField, Min(1f)] private float _countdownSeconds = 3f;
         [SerializeField, Min(1f)] private float _sampleRateHz = 30f;
         [SerializeField, Min(0f)] private float _pinchDebounceSeconds = 0.05f;
@@ -54,7 +55,10 @@ namespace Ankhora.Foundation.Recording
             if (source == null)
                 Debug.LogError("[PinchRecordingTrigger] _poseSourceBehaviour must implement IHandPoseSource.", this);
             else
-                _session = new RecordingSession(source, _sampleRateHz);
+            {
+                var voice = _voiceSourceBehaviour as IVoiceCaptureSource;
+                _session = new RecordingSession(source, _sampleRateHz, voice);
+            }
 
             if (_triggerHand == null)
                 Debug.LogError("[PinchRecordingTrigger] Assign the non-dominant trigger OVRHand.", this);
