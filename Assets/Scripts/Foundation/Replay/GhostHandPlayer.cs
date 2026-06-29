@@ -126,28 +126,20 @@ namespace Ankhora.Foundation.Replay
                 _rightBones = new Quaternion[needed];
             }
 
-            // Allocate position buffers only if the recording actually carries per-frame bone positions;
-            // otherwise leave them null so replay falls back to the rest bind offsets (legacy recordings).
-            bool hasPositions = TimelineHasBonePositions(timeline);
-            if (hasPositions && (_leftBonePositions == null || _leftBonePositions.Length < needed))
-            {
-                _leftBonePositions = new Vector3[needed];
-                _rightBonePositions = new Vector3[needed];
-            }
-            else if (!hasPositions)
-            {
-                _leftBonePositions = null;
-                _rightBonePositions = null;
-            }
+            // Allocate each hand's position buffer independently, only if THAT hand carries per-frame bone
+            // positions. A hand without them keeps a null buffer so replay falls back to its rest bind
+            // offsets, rather than being driven with stale zeros from a buffer the sampler never fills.
+            _leftBonePositions = EnsurePositionBuffer(
+                _leftBonePositions, TimelineSampler.HasBoneLocalPositions(timeline, rightHand: false), needed);
+            _rightBonePositions = EnsurePositionBuffer(
+                _rightBonePositions, TimelineSampler.HasBoneLocalPositions(timeline, rightHand: true), needed);
         }
 
-        private static bool TimelineHasBonePositions(Timeline timeline)
+        private static Vector3[] EnsurePositionBuffer(Vector3[] buffer, bool hasPositions, int needed)
         {
-            if (timeline.frames.Count == 0)
-                return false;
-            PoseFrame f = timeline.frames[0];
-            return (f.leftHand.boneLocalPositions?.Length ?? 0) > 0 ||
-                   (f.rightHand.boneLocalPositions?.Length ?? 0) > 0;
+            if (!hasPositions)
+                return null;
+            return (buffer == null || buffer.Length < needed) ? new Vector3[needed] : buffer;
         }
 
         private static int BoneCount(HandSkeleton s) => s != null && s.IsValid ? s.boneParents.Length : 0;

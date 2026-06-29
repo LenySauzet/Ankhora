@@ -33,6 +33,7 @@ namespace Ankhora.Foundation.Replay
         private Transform[] _bones;     // index-aligned with captured boneRotations; _bones[_rootIndex] == this.transform
         private int _rootIndex;         // topological root bone (the wrist in OpenXR hands), NOT necessarily 0
         private SkinnedMeshRenderer _renderer;
+        private Mesh _instancedMesh;    // our private copy of the runtime OVRMesh; we own it -> destroy it
         private bool _built;
 
         public void Bind(HandSkeleton skeleton)
@@ -86,8 +87,10 @@ namespace Ankhora.Foundation.Replay
         private void BuildRenderer()
         {
             // Private copy: OVRMesh.Mesh is a single runtime Mesh shared with the live hand's renderer, and
-            // we overwrite its bindposes — mutating the shared instance would corrupt the live hand.
+            // we overwrite its bindposes — mutating the shared instance would corrupt the live hand. We own
+            // this instance (Instantiate'd Mesh is not collected with the hierarchy), so OnDestroy frees it.
             Mesh mesh = Instantiate(_ovrMesh.Mesh);
+            _instancedMesh = mesh;
 
             // Bake the wrist-fade gradient into this copy's vertex-colour alpha so the ghost fades at the
             // wrist (GhostHands_URP reads COLOR.a). Geometry-based, independent of the mesh UVs/glow mask.
@@ -114,7 +117,9 @@ namespace Ankhora.Foundation.Replay
             _renderer.bones = _bones;               // captured BoneId order == the mesh's blend-index order
             _renderer.rootBone = _bones[_rootIndex];   // the wrist anchor, not the palm (index 0)
             _renderer.localBounds = new Bounds(Vector3.zero, Vector3.one * 0.4f); // hand-sized; avoids culling pops
-            _renderer.updateWhenOffscreen = true;
+            // Keep culling on: the hand-sized localBounds above already prevents the pops updateWhenOffscreen
+            // would otherwise mask, so we don't pay per-frame skinning while the user looks away from the ghost.
+            _renderer.updateWhenOffscreen = false;
             if (_ghostMaterial != null)
                 _renderer.sharedMaterial = _ghostMaterial;
         }
@@ -123,6 +128,14 @@ namespace Ankhora.Foundation.Replay
         {
             if (_renderer != null)
                 _renderer.enabled = visible;
+        }
+
+        private void OnDestroy()
+        {
+            // sharedMesh is a reference, not ownership: an Instantiate'd Mesh outlives the renderer's
+            // teardown, so free our private copy explicitly to avoid orphaning it on scene reload/pooling.
+            if (_instancedMesh != null)
+                Destroy(_instancedMesh);
         }
 
         public void Apply(in Pose root, Quaternion[] boneRotations, Vector3[] boneLocalPositions, int boneCount)

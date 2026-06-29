@@ -81,6 +81,61 @@ namespace Ankhora.Tests.EditMode
         }
 
         [Test]
+        public void HasBoneLocalPositions_FirstFrameUntracked_StillDetectsLaterPositions()
+        {
+            // Regression: the take opens with BOTH hands untracked (positions null), then a hand comes into
+            // view. Detection must scan past frame[0]; otherwise the replay player nulls its position buffers
+            // for the whole take and the fingertip offset the position channel fixes comes back.
+            var tl = new Timeline { durationSeconds = 1f };
+            tl.frames.Add(new PoseFrame { t = 0f });   // both hands default => boneLocalPositions null
+            tl.frames.Add(new PoseFrame
+            {
+                t = 0.5f,
+                rightHand = Hand(Vector3.zero, new[] { Quaternion.identity }, new[] { new Vector3(1f, 0f, 0f) })
+            });
+
+            Assert.IsTrue(TimelineSampler.HasBoneLocalPositions(tl));
+        }
+
+        [Test]
+        public void HasBoneLocalPositions_PerHand_DetectsEachHandIndependently()
+        {
+            // Only the RIGHT hand ever carries positions; the left never does. The player must allocate the
+            // right position buffer and leave the left null (so the left keeps its bind offsets instead of
+            // being driven with stale zeros from a buffer the sampler never fills).
+            var tl = new Timeline { durationSeconds = 1f };
+            tl.frames.Add(new PoseFrame
+            {
+                t = 0f,
+                leftHand = new HandPose { root = Pose.identity, boneRotations = new[] { Quaternion.identity } }, // tracked, no positions
+                rightHand = Hand(Vector3.zero, new[] { Quaternion.identity }, new[] { new Vector3(1f, 0f, 0f) })
+            });
+
+            Assert.IsTrue(TimelineSampler.HasBoneLocalPositions(tl, rightHand: true), "right hand has positions");
+            Assert.IsFalse(TimelineSampler.HasBoneLocalPositions(tl, rightHand: false), "left hand has none");
+            Assert.IsTrue(TimelineSampler.HasBoneLocalPositions(tl), "timeline-wide is the OR of both hands");
+        }
+
+        [Test]
+        public void HasBoneLocalPositions_NoFrameHasPositions_ReturnsFalse()
+        {
+            var tl = new Timeline { durationSeconds = 1f };
+            tl.frames.Add(new PoseFrame
+            {
+                t = 0f,
+                rightHand = new HandPose { root = Pose.identity, boneRotations = new[] { Quaternion.identity } }
+            });
+            Assert.IsFalse(TimelineSampler.HasBoneLocalPositions(tl));
+        }
+
+        [Test]
+        public void HasBoneLocalPositions_EmptyOrNull_ReturnsFalse()
+        {
+            Assert.IsFalse(TimelineSampler.HasBoneLocalPositions(new Timeline()));
+            Assert.IsFalse(TimelineSampler.HasBoneLocalPositions(null));
+        }
+
+        [Test]
         public void SampleHand_SourceWithoutPositions_LeavesBufferUntouched()
         {
             // A legacy frame with rotations but no positions: the position buffer keeps its prior values

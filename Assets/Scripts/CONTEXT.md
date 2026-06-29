@@ -20,7 +20,7 @@ Scripts/
   Foundation/             # device layer — MonoBehaviour + OVR. Assembly: Ankhora.Foundation → Ankhora.Domain, Oculus.VR.
     Recording/            # IHandPoseSource / IHandSkeletonSource seams, OvrHandPoseSource (OVRSkeleton reader),
                           #   RecordingSession (shared capture core), PinchRecordingTrigger (non-dominant index-pinch toggle → 3-2-1 countdown → record → second pinch saves)
-    Replay/               # IHandView seam, GhostHandPlayer (drives views from a Timeline), SkinnedGhostHandView (default — skinned translucent Meta hand mesh), FkGhostHandView (fallback — joint spheres, validated debug visual)
+    Replay/               # IHandView seam, GhostHandPlayer (drives views from a Timeline), SkinnedGhostHandView (skinned translucent Meta hand mesh — the device-verified ghost)
     Persistence/          # MasterclassStore (load/save JSON to persistentDataPath)
     Passthrough/          # OvrPassthroughSurface + shader props
     App/                  # composition roots that wire features together (e.g. RecordReplayLink)
@@ -44,7 +44,7 @@ Tests live in `Assets/Tests/EditMode/` (assembly `Ankhora.Tests.EditMode`, refer
 ## Canonical vs. scaffolding (read before extending)
 
 - **Canonical path:** `OvrHandPoseSource` → `RecordingSession` (+ `MasterclassStore`) → JSON; then
-  `GhostHandPlayer` → `SkinnedGhostHandView` (default) / `FkGhostHandView` (fallback). `RecordingSession`
+  `GhostHandPlayer` → `SkinnedGhostHandView` (the device-verified ghost, behind the `IHandView` seam). `RecordingSession`
   is the shared capture core every trigger delegates to (it captures the per-hand skeleton — a recorder
   that skips that produces unreplayable files).
 - **Scaffolding (transitional):** `PinchRecordingTrigger` is the current interim recording trigger — a

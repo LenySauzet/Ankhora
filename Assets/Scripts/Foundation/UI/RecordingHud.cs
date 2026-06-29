@@ -73,9 +73,10 @@ namespace Ankhora.Foundation.UI
                 // floor makes the pulse read as a gentle breathing glow rather than a window. Unscaled time
                 // so slow-motion replay never affects the cue.
                 float t = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * _pulseHz * 2f * Mathf.PI);
-                Color c = RecordingColor;
-                c.a = Mathf.Lerp(0.6f, 1f, t);
-                _dot.color = c;
+                // Drive alpha through the CanvasRenderer, not Graphic.color: setting .color every frame calls
+                // SetVerticesDirty() and rebuilds the canvas each frame for the whole take. SetAlpha multiplies
+                // the already-uploaded geometry without dirtying it. The RGB was set once in ShowRecording().
+                _dot.canvasRenderer.SetAlpha(Mathf.Lerp(0.6f, 1f, t));
             }
 
             if (_hideAt > 0f && Time.unscaledTime >= _hideAt)
@@ -120,6 +121,7 @@ namespace Ankhora.Foundation.UI
             if (_dot == null)
                 return;
             _dot.color = color;                 // alpha as given (recording pulses it; saved stays opaque)
+            _dot.canvasRenderer.SetAlpha(1f);   // clear any leftover pulse multiplier so non-recording states are full alpha
             _dot.gameObject.SetActive(visible);
         }
 

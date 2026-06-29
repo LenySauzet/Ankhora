@@ -136,6 +136,35 @@ namespace Ankhora.Domain.Sampling
             return true;
         }
 
+        /// <summary>
+        /// True when ANY frame carries per-bone local positions on either hand. Used by the replay player
+        /// to decide whether to allocate the position buffers. Scans every frame, not just the first: a take
+        /// whose opening frame has both hands untracked (positions null) still gains the position channel
+        /// as soon as a hand comes into view, and replaying it without that channel re-opens the fingertip
+        /// offset the channel was added to fix.
+        /// </summary>
+        public static bool HasBoneLocalPositions(Timeline timeline)
+            => HasBoneLocalPositions(timeline, rightHand: false) || HasBoneLocalPositions(timeline, rightHand: true);
+
+        /// <summary>
+        /// Per-hand variant: true when ANY frame carries per-bone local positions for the given hand. The
+        /// player allocates each hand's position buffer independently from this, so a take where only one
+        /// hand ever carries positions leaves the other hand's buffer null (replay keeps its rest bind
+        /// offsets) rather than driving it with stale zeros.
+        /// </summary>
+        public static bool HasBoneLocalPositions(Timeline timeline, bool rightHand)
+        {
+            var frames = timeline?.frames;
+            if (frames == null)
+                return false;
+            for (int i = 0; i < frames.Count; i++)
+            {
+                if (HasPositions(HandOf(frames[i], rightHand)))
+                    return true;
+            }
+            return false;
+        }
+
         private static HandPose HandOf(in PoseFrame f, bool rightHand) => rightHand ? f.rightHand : f.leftHand;
 
         private static bool IsTracked(in HandPose h) => h.boneRotations != null && h.boneRotations.Length > 0;
