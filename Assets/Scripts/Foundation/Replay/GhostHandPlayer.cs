@@ -16,6 +16,7 @@ namespace Ankhora.Foundation.Replay
     {
         [SerializeField] private MonoBehaviour _leftViewBehaviour;   // implements IHandView
         [SerializeField] private MonoBehaviour _rightViewBehaviour;  // implements IHandView
+        [SerializeField] private VoicePlayer _voicePlayer;   // optional; same Replay feature folder
         [Tooltip("Optional manual re-watch trigger. PrimaryIndexTrigger by default (free of the passthrough B/Y toggle).")]
         [SerializeField] private OVRInput.Button _playButton = OVRInput.Button.PrimaryIndexTrigger;
         [SerializeField] private string _storageDir = "mc-local";
@@ -61,6 +62,8 @@ namespace Ankhora.Foundation.Replay
 
             _leftTracked = DriveHand(_leftView, rightHand: false, _leftBones, _leftBonePositions, _leftTracked);
             _rightTracked = DriveHand(_rightView, rightHand: true, _rightBones, _rightBonePositions, _rightTracked);
+            if (_voicePlayer != null)
+                _voicePlayer.Tick(_clock, _playing, TimelineSampler.SampleHead(_timeline, _clock).position);
         }
 
         private bool DriveHand(IHandView view, bool rightHand, Quaternion[] buffer, Vector3[] positions, bool wasTracked)
@@ -94,6 +97,18 @@ namespace Ankhora.Foundation.Replay
             _leftView?.Bind(_timeline.leftSkeleton);
             _rightView?.Bind(_timeline.rightSkeleton);
 
+            if (_voicePlayer != null)
+            {
+                VoiceTrack vt = _timeline.voiceTrack;
+                if (vt != null && vt.HasClip && _store.ReadBlob(vt.clipRef, out byte[] wav, out string vErr))
+                    _voicePlayer.Load(wav, vt);
+                else
+                {
+                    if (vt != null && vt.HasClip) Debug.LogWarning($"[GhostHandPlayer] Voice blob missing: {vErr}");
+                    _voicePlayer.Stop();
+                }
+            }
+
             _clock = 0f;
             _playing = true;
             _leftTracked = _rightTracked = false;   // force a Show() on the first tracked frame
@@ -107,6 +122,7 @@ namespace Ankhora.Foundation.Replay
             _leftView?.Show(false);
             _rightView?.Show(false);
             _leftTracked = _rightTracked = false;
+            if (_voicePlayer != null) _voicePlayer.Stop();
         }
 
         /// <summary>Size the reused sample buffers from the loaded recording's actual bone count.</summary>
