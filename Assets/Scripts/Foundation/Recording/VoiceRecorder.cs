@@ -1,5 +1,8 @@
 using Ankhora.Domain.Audio;
 using UnityEngine;
+#if UNITY_ANDROID
+using UnityEngine.Android;
+#endif
 
 namespace Ankhora.Foundation.Recording
 {
@@ -21,7 +24,24 @@ namespace Ankhora.Foundation.Recording
         private float _firstSampleOffset;   // seconds from _beginNow to the first delivered sample
         private bool _firstSampleSeen;
 
-        public bool IsAvailable => Microphone.devices != null && Microphone.devices.Length > 0;
+        public bool IsAvailable
+        {
+            get
+            {
+#if UNITY_ANDROID && !UNITY_EDITOR
+                if (!Permission.HasUserAuthorizedPermission(Permission.Microphone)) return false;
+#endif
+                return Microphone.devices != null && Microphone.devices.Length > 0;
+            }
+        }
+
+        private void OnEnable()
+        {
+#if UNITY_ANDROID && !UNITY_EDITOR
+            if (!Permission.HasUserAuthorizedPermission(Permission.Microphone))
+                Permission.RequestUserPermission(Permission.Microphone);
+#endif
+        }
 
         public void BeginCapture(float now)
         {
