@@ -18,7 +18,7 @@ namespace Ankhora.Foundation.Replay
         [SerializeField] private MonoBehaviour _rightViewBehaviour;  // implements IHandView
         [Tooltip("Optional manual re-watch trigger. PrimaryIndexTrigger by default (free of the passthrough B/Y toggle).")]
         [SerializeField] private OVRInput.Button _playButton = OVRInput.Button.PrimaryIndexTrigger;
-        [SerializeField] private string _fileName = "masterclass.json";
+        [SerializeField] private string _storageDir = "mc-local";
         [SerializeField] private bool _loop = true;
 
         private MasterclassStore _store;
@@ -36,7 +36,7 @@ namespace Ankhora.Foundation.Replay
 
         private void Awake()
         {
-            _store = new MasterclassStore(_fileName);
+            _store = new MasterclassStore(_storageDir);
             _leftView = _leftViewBehaviour as IHandView;
             _rightView = _rightViewBehaviour as IHandView;
             _leftView?.Show(false);

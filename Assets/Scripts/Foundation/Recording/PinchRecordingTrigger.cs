@@ -25,7 +25,7 @@ namespace Ankhora.Foundation.Recording
         [SerializeField, Min(1f)] private float _countdownSeconds = 3f;
         [SerializeField, Min(1f)] private float _sampleRateHz = 30f;
         [SerializeField, Min(0f)] private float _pinchDebounceSeconds = 0.05f;
-        [SerializeField] private string _fileName = "masterclass.json";
+        [SerializeField] private string _storageDir = "mc-local";
 
         [Tooltip("Raised after the take is saved — wire it to the ghost player's LoadAndPlay in the scene.")]
         [SerializeField] private UnityEvent _onRecordingSaved = new UnityEvent();
@@ -59,7 +59,7 @@ namespace Ankhora.Foundation.Recording
             if (_triggerHand == null)
                 Debug.LogError("[PinchRecordingTrigger] Assign the non-dominant trigger OVRHand.", this);
 
-            _store = new MasterclassStore(_fileName);
+            _store = new MasterclassStore(_storageDir);
             _countdown = new RecordingCountdown(_countdownSeconds);
             _pinch = new PinchEdgeDetector(_pinchDebounceSeconds);
         }
@@ -134,7 +134,7 @@ namespace Ankhora.Foundation.Recording
             }
 
             Debug.Log($"[PinchRecordingTrigger] Saved {frames} frames " +
-                      $"(L:{_session.LeftBoneCount} R:{_session.RightBoneCount} bones) to {_store.Path}. Replaying.");
+                      $"(L:{_session.LeftBoneCount} R:{_session.RightBoneCount} bones) to {_store.ManifestPath}. Replaying.");
             _onRecordingSaved.Invoke();
         }
     }
