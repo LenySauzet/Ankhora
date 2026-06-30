@@ -1,3 +1,5 @@
+using System;
+
 namespace Ankhora.Domain.Audio
 {
     /// <summary>
@@ -7,26 +9,34 @@ namespace Ankhora.Domain.Audio
     public static class AudioLevels
     {
         /// <summary>
-        /// Peak-normalises <paramref name="samples"/> in place so the loudest sample reaches
-        /// <paramref name="targetPeak"/> (default 0.95, leaving headroom). Quiet captures (the Quest mic
-        /// runs at a low gain) are boosted; hot captures are scaled down to avoid clipping. A silent,
-        /// null, or empty buffer is left untouched. Operates in place to avoid a second buffer on device.
+        /// Loudness-normalises <paramref name="samples"/> in place: applies a makeup gain so the signal's
+        /// RMS (perceived loudness, not just peak) reaches <paramref name="targetRms"/>, capped at
+        /// <paramref name="maxGain"/> so a near-silent take doesn't blow up its noise floor, then hard-limits
+        /// to ±<paramref name="limit"/> so the occasional transient can't clip. Peak normalisation alone
+        /// leaves quiet, dynamic speech sounding faint — the Quest mic captures at a low gain — so targeting
+        /// RMS is what makes the narration actually audible. A silent/null/empty buffer is left untouched.
+        /// Operates in place to avoid a second buffer on device.
         /// </summary>
-        public static void PeakNormalize(float[] samples, float targetPeak = 0.95f)
+        public static void NormalizeLoudness(float[] samples, float targetRms = 0.22f, float maxGain = 14f, float limit = 0.98f)
         {
-            if (samples == null || samples.Length == 0 || targetPeak <= 0f) return;
+            if (samples == null || samples.Length == 0 || targetRms <= 0f) return;
 
-            float peak = 0f;
+            double sumSq = 0.0;
+            for (int i = 0; i < samples.Length; i++)
+                sumSq += (double)samples[i] * samples[i];
+            float rms = (float)Math.Sqrt(sumSq / samples.Length);
+            if (rms <= 1e-6f) return;   // silence — nothing to lift, and avoids div-by-zero
+
+            float gain = targetRms / rms;
+            if (gain > maxGain) gain = maxGain;
+
             for (int i = 0; i < samples.Length; i++)
             {
-                float a = samples[i] < 0f ? -samples[i] : samples[i];
-                if (a > peak) peak = a;
+                float v = samples[i] * gain;
+                if (v > limit) v = limit;
+                else if (v < -limit) v = -limit;
+                samples[i] = v;
             }
-            if (peak <= 1e-6f) return;   // silence — nothing to scale, and avoids div-by-zero
-
-            float gain = targetPeak / peak;
-            for (int i = 0; i < samples.Length; i++)
-                samples[i] *= gain;
         }
     }
 }

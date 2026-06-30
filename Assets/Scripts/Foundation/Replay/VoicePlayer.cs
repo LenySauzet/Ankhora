@@ -25,13 +25,15 @@ namespace Ankhora.Foundation.Replay
             _source = GetComponent<AudioSource>();
             _source.playOnAwake = false;
             _source.loop = false;
-            _source.spatialBlend = 1f;     // full 3D distance/pan
-            _source.spatialize = true;     // route through the installed Meta XR Audio spatialiser (HRTF) — spatialBlend alone is only Unity's built-in pan
-            // Keep the narration at full level across the working space: the HRTF still gives direction,
-            // but distance shouldn't bury it. Linear falloff, full volume within a few metres of the ghost.
+            // Audible-first spatial narration: keep light 3D positioning (the voice pans toward the ghost),
+            // but DROP the Meta XR Audio HRTF — it attenuates heavily for no perceptible gain at masterclass
+            // range and was the main reason narration was too quiet. Constant-power pan preserves loudness;
+            // a large minDistance keeps the voice at full level across the whole room.
+            _source.spatialBlend = 1f;
+            _source.spatialize = false;
             _source.rolloffMode = AudioRolloffMode.Linear;
-            _source.minDistance = 4f;
-            _source.maxDistance = 12f;
+            _source.minDistance = 10f;
+            _source.maxDistance = 30f;
         }
 
         /// <summary>Decode the WAV blob into a clip and arm playback. No-op if the track has no clip.</summary>

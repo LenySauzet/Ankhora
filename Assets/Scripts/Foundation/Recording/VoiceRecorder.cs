@@ -78,7 +78,7 @@ namespace Ankhora.Foundation.Recording
             int sampleRate = _clip.frequency;
             var data = new float[sampleCount * channels];
             _clip.GetData(data, 0);
-            AudioLevels.PeakNormalize(data);   // the Quest mic captures at a low gain — lift to full scale before encoding
+            AudioLevels.NormalizeLoudness(data);   // the Quest mic captures at a low gain — lift perceived loudness (RMS) before encoding
 
             result = new VoiceCaptureResult
             {
