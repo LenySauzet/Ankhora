@@ -27,6 +27,11 @@ namespace Ankhora.Foundation.Replay
             _source.loop = false;
             _source.spatialBlend = 1f;     // full 3D distance/pan
             _source.spatialize = true;     // route through the installed Meta XR Audio spatialiser (HRTF) — spatialBlend alone is only Unity's built-in pan
+            // Keep the narration at full level across the working space: the HRTF still gives direction,
+            // but distance shouldn't bury it. Linear falloff, full volume within a few metres of the ghost.
+            _source.rolloffMode = AudioRolloffMode.Linear;
+            _source.minDistance = 4f;
+            _source.maxDistance = 12f;
         }
 
         /// <summary>Decode the WAV blob into a clip and arm playback. No-op if the track has no clip.</summary>
