@@ -67,7 +67,7 @@ namespace Ankhora.Tests.EditMode
             var store = new MasterclassStore(_dir);
             session.Begin(0f); session.Tick(0f);
             Assert.IsTrue(session.SaveTo(store, 1f, out _, out _));
-            store.TryLoad(out Masterclass mc, out _);
+            Assert.IsTrue(store.TryLoad(out Masterclass mc, out string loadError), loadError);
             Assert.IsFalse(mc.chapters[0].timeline.voiceTrack != null && mc.chapters[0].timeline.voiceTrack.HasClip);
         }
     }

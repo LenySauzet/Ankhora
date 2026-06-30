@@ -60,9 +60,9 @@ namespace Ankhora.Foundation.Persistence
         /// <summary>Writes raw bytes to a sibling blob path inside <see cref="BaseDir"/>; returns false (with a reason) on failure.</summary>
         public bool WriteBlob(string relPath, byte[] bytes, out string error)
         {
+            if (!TryResolveBlobPath(relPath, out string full, out error)) return false;
             try
             {
-                string full = System.IO.Path.Combine(BaseDir, relPath);
                 Directory.CreateDirectory(System.IO.Path.GetDirectoryName(full));
                 File.WriteAllBytes(full, bytes ?? Array.Empty<byte>());
                 error = null;
@@ -75,10 +75,30 @@ namespace Ankhora.Foundation.Persistence
         public bool ReadBlob(string relPath, out byte[] bytes, out string error)
         {
             bytes = null;
-            string full = System.IO.Path.Combine(BaseDir, relPath);
+            if (!TryResolveBlobPath(relPath, out string full, out error)) return false;
             if (!File.Exists(full)) { error = $"No blob at {full}"; return false; }
             try { bytes = File.ReadAllBytes(full); error = null; return true; }
             catch (Exception e) { error = e.Message; return false; }
+        }
+
+        /// <summary>Resolves a blob path and confines it to <see cref="BaseDir"/>: rejects rooted paths and
+        /// <c>..</c> traversal so a manifest-supplied relative path can never read or write outside the
+        /// masterclass folder. Defence-in-depth — today's only blob ref is the fixed <c>voice-ch-1.wav</c>.</summary>
+        private bool TryResolveBlobPath(string relPath, out string full, out string error)
+        {
+            full = null;
+            if (string.IsNullOrEmpty(relPath) || System.IO.Path.IsPathRooted(relPath))
+            { error = $"Invalid blob path: {relPath}"; return false; }
+
+            string root = System.IO.Path.GetFullPath(BaseDir);
+            string combined = System.IO.Path.GetFullPath(System.IO.Path.Combine(root, relPath));
+            if (combined != root &&
+                !combined.StartsWith(root + System.IO.Path.DirectorySeparatorChar, StringComparison.Ordinal))
+            { error = $"Blob path escapes storage dir: {relPath}"; return false; }
+
+            full = combined;
+            error = null;
+            return true;
         }
     }
 }

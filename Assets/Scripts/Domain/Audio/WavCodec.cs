@@ -52,20 +52,31 @@ namespace Ankhora.Domain.Audio
             if (wav == null || wav.Length < HeaderBytes) return false;
             if (wav[0] != 'R' || wav[1] != 'I' || wav[2] != 'F' || wav[3] != 'F') return false;
             if (wav[8] != 'W' || wav[9] != 'A' || wav[10] != 'V' || wav[11] != 'E') return false;
+            if (wav[12] != 'f' || wav[13] != 'm' || wav[14] != 't' || wav[15] != ' ') return false;
+            if (wav[36] != 'd' || wav[37] != 'a' || wav[38] != 't' || wav[39] != 'a') return false;
 
+            int fmtChunkSize = wav[16] | (wav[17] << 8) | (wav[18] << 16) | (wav[19] << 24);
+            int audioFormat = wav[20] | (wav[21] << 8);
             channels = wav[22] | (wav[23] << 8);
             sampleRate = wav[24] | (wav[25] << 8) | (wav[26] << 16) | (wav[27] << 24);
+            int bitsPerSample = wav[34] | (wav[35] << 8);
             int dataBytes = wav[40] | (wav[41] << 8) | (wav[42] << 16) | (wav[43] << 24);
-            dataBytes = Mathf.Clamp(dataBytes, 0, wav.Length - HeaderBytes);
 
+            // Canonical 16-bit PCM only — reject anything else so a corrupt blob takes the hands-only fallback.
+            if (fmtChunkSize != 16 || audioFormat != 1 || bitsPerSample != BitsPerSample) return false;
+            if (channels <= 0 || channels > 8 || sampleRate <= 0) return false;
+
+            dataBytes = Mathf.Clamp(dataBytes, 0, wav.Length - HeaderBytes);
             int count = dataBytes / 2;
+            if (count % channels != 0) return false;   // frame count must be whole across all channels
+
             samples = new float[count];
             for (int i = 0; i < count; i++)
             {
                 short s = (short)(wav[HeaderBytes + i * 2] | (wav[HeaderBytes + i * 2 + 1] << 8));
-                samples[i] = s / 32767f;
+                samples[i] = Mathf.Clamp(s / 32767f, -1f, 1f);   // clamp keeps int16 min (-32768) inside the [-1, 1] contract
             }
-            return channels > 0 && sampleRate > 0;
+            return true;
         }
     }
 }

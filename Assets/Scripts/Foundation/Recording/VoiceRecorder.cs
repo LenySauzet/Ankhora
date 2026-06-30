@@ -72,10 +72,12 @@ namespace Ankhora.Foundation.Recording
             int sampleCount = Microphone.GetPosition(_device);   // samples written so far (per channel)
             Microphone.End(_device);
             _capturing = false;
-            if (sampleCount <= 0) return false;
+            if (sampleCount <= 0) { ReleaseClip(); return false; }
 
             int channels = _clip.channels;
             int sampleRate = _clip.frequency;
+            if (channels != 1)
+                Debug.LogWarning($"[VoiceRecorder] Mic reports {channels} channels; the voice path expects mono.", this);
             var data = new float[sampleCount * channels];
             _clip.GetData(data, 0);
             AudioLevels.NormalizeLoudness(data);   // the Quest mic captures at a low gain — lift perceived loudness (RMS) before encoding
@@ -88,13 +90,22 @@ namespace Ankhora.Foundation.Recording
                 timelineOffsetSeconds = _firstSampleOffset,
                 durationSeconds = (float)sampleCount / sampleRate
             };
-            _clip = null;
+            ReleaseClip();
             return true;
         }
 
         private void OnDisable()
         {
             if (_capturing) { Microphone.End(_device); _capturing = false; }
+            ReleaseClip();
+        }
+
+        /// <summary>Microphone.Start allocates a runtime AudioClip that is not collected with the hierarchy,
+        /// so it must be destroyed explicitly on every capture-end path — otherwise each take leaks its
+        /// native PCM buffer until scene unload.</summary>
+        private void ReleaseClip()
+        {
+            if (_clip != null) { Destroy(_clip); _clip = null; }
         }
     }
 }

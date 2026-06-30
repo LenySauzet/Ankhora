@@ -43,5 +43,22 @@ namespace Ankhora.Tests.EditMode
         [Test]
         public void TryDecode_NonRiffBytes_ReturnsFalse()
             => Assert.IsFalse(WavCodec.TryDecode(new byte[] { 1, 2, 3, 4 }, out _, out _, out _));
+
+        [Test]
+        public void TryDecode_NonPcmFormat_ReturnsFalse()
+        {
+            byte[] wav = WavCodec.Encode(new[] { 0.1f, -0.1f }, 16000, 1);
+            wav[20] = 2;   // audioFormat PCM(1) -> non-PCM
+            Assert.IsFalse(WavCodec.TryDecode(wav, out _, out _, out _));
+        }
+
+        [Test]
+        public void TryDecode_ClampsInt16MinToMinusOne()
+        {
+            byte[] wav = WavCodec.Encode(new[] { 0f }, 16000, 1);   // one mono sample
+            wav[44] = 0x00; wav[45] = 0x80;                          // overwrite to int16 min (-32768)
+            Assert.IsTrue(WavCodec.TryDecode(wav, out float[] s, out _, out _));
+            Assert.That(s[0], Is.EqualTo(-1f).Within(1e-6f));        // clamped, not -1.00003
+        }
     }
 }

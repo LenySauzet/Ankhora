@@ -43,5 +43,18 @@ namespace Ankhora.Tests.EditMode
             Assert.IsFalse(store.ReadBlob("nope.wav", out _, out string error));
             Assert.IsNotEmpty(error);
         }
+
+        [Test]
+        public void WriteBlob_TraversalOrRootedPath_IsRejected()
+        {
+            var store = new MasterclassStore(_dir);
+            byte[] payload = { 9 };
+            Assert.IsFalse(store.WriteBlob("../escape.wav", payload, out string e1), "must reject .. traversal");
+            Assert.IsNotEmpty(e1);
+            Assert.IsFalse(store.WriteBlob("/tmp/escape.wav", payload, out string e2), "must reject rooted path");
+            Assert.IsNotEmpty(e2);
+            Assert.IsFalse(store.ReadBlob("../../etc/hosts", out _, out string e3), "must reject .. traversal on read");
+            Assert.IsNotEmpty(e3);
+        }
     }
 }

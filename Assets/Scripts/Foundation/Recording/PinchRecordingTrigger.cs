@@ -57,6 +57,8 @@ namespace Ankhora.Foundation.Recording
             else
             {
                 var voice = _voiceSourceBehaviour as IVoiceCaptureSource;
+                if (_voiceSourceBehaviour != null && voice == null)
+                    Debug.LogError("[PinchRecordingTrigger] _voiceSourceBehaviour must implement IVoiceCaptureSource; recording hands-only.", this);
                 _session = new RecordingSession(source, _sampleRateHz, voice);
             }
 
