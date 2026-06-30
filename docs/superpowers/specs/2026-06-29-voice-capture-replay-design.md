@@ -1,7 +1,7 @@
 # Voice Capture + Replay — design
 
 > The Instructor's narration is captured in the same take as the ghost hands, and replays
-> spatialised from the ghost's head, locked to the single replay clock. Next build slice on
+> spatialized from the ghost's head, locked to the single replay clock. Next build slice on
 > top of the merged record/replay spine (Domain + Foundation, [ADR-0004](../../02-architecture/adr/0004-domain-foundation-two-assembly-split.md))
 > and the hand-tracking work (PR #33).
 >
@@ -10,7 +10,7 @@
 ## Goal
 
 One take captures voice + hands together; the Learner replays it with the narration
-spatialised from the expert's recorded head, perfectly in sync with the ghost hands —
+spatialized from the expert's recorded head, perfectly in sync with the ghost hands —
 because audio and hands are driven by the **same** playback clock, never two.
 
 ## Where this sits
@@ -23,7 +23,7 @@ because audio and hands are driven by the **same** playback clock, never two.
   (replay). `GhostHandPlayer` owns `_clock` (advanced by `Time.unscaledDeltaTime`), the one
   sync anchor everything rides.
 - **Skill:** `.claude/skills/voice-spatial-audio/SKILL.md` (Microphone capture, Meta XR
-  Audio spatialiser, share the clock). This spec deviates from its "compressed Vorbis/AAC"
+  Audio spatializer, share the clock). This spec deviates from its "compressed Vorbis/AAC"
   note — see §2.
 
 ## Scope (YAGNI-tight)
@@ -115,7 +115,7 @@ hands, and so a null/absent source degrades to hands-only cleanly.
 - `GhostHandPlayer` owns `_clock`; it composes a `VoicePlayer`, wired through
   `Foundation/App/RecordReplayLink` (ADR-0004 — no cross-feature references).
 - `VoicePlayer` loads the WAV blob → `AudioClip`, on an `AudioSource` configured
-  `spatialBlend = 1` (full 3D) with the **Meta XR Audio** spatialiser (Project Settings →
+  `spatialBlend = 1` (full 3D) with the **Meta XR Audio** spatializer (Project Settings →
   Audio → Spatializer Plugin = Meta XR Audio).
 - Each `Update` (driven by `GhostHandPlayer`, not its own clock):
   1. Position the `AudioSource` at `TimelineSampler.SampleHead(_timeline, _clock).position`
@@ -152,7 +152,7 @@ recordings are throwaway test data — no migration path needed.
   - `Timeline` with a null `voiceTrack` round-trips (hands-only take stays valid).
 - **Device (Mac Editor can't render hand tracking):** record a take, then confirm:
   voice replays **in sync** with the ghost hands; it emanates from the ghost's head as the
-  head moves; loop restarts cleanly; the Meta spatialiser is active (console); the
+  head moves; loop restarts cleanly; the Meta spatializer is active (console); the
   permission prompt appears on first run and a denied permission yields a clean hands-only take.
 
 ## Files
@@ -165,7 +165,7 @@ recordings are throwaway test data — no migration path needed.
 | `Assets/Scripts/Foundation/Recording/VoiceRecorder.cs` | **new** — Microphone capture + WAV write |
 | `Assets/Scripts/Foundation/Recording/IVoiceCaptureSource.cs` | **new** — capture seam |
 | `Assets/Scripts/Foundation/Recording/RecordingSession.cs` | drive voice capture in `Begin`/`Finish`/`SaveTo` |
-| `Assets/Scripts/Foundation/Replay/VoicePlayer.cs` | **new** — spatialised clock-driven playback |
+| `Assets/Scripts/Foundation/Replay/VoicePlayer.cs` | **new** — spatialized clock-driven playback |
 | `Assets/Scripts/Foundation/Replay/GhostHandPlayer.cs` | compose + drive `VoicePlayer` from `_clock` |
 | `Assets/Scripts/Foundation/App/RecordReplayLink.cs` | wire recorder↔player voice ends |
 | `Assets/Scripts/Foundation/Persistence/MasterclassStore.cs` | per-masterclass dir + blob read/write |

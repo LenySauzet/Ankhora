@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Capture the Instructor's narration in the same take as the ghost hands and replay it spatialised from the ghost's head, locked to the single replay clock.
+**Goal:** Capture the Instructor's narration in the same take as the ghost hands and replay it spatialized from the ghost's head, locked to the single replay clock.
 
 **Architecture:** Pure logic (DTO, clock→playhead math, WAV encode/decode) lives in `Ankhora.Domain` and is EditMode-tested without a headset (ADR-0004). Device code (`Microphone`, `AudioSource` + Meta XR Audio, runtime permission) lives in `Ankhora.Foundation` and is verified in Play Mode / on Quest. Audio rides `GhostHandPlayer._clock` — never a second clock.
 
-**Tech Stack:** Unity 6 (`6000.4.10f1`), URP 17.4, Meta XR SDK All-in-One 201.0.0 (Meta XR Audio spatialiser), `UnityEngine.Microphone`, `UnityEngine.AudioSource`, Unity Test Framework (EditMode/NUnit).
+**Tech Stack:** Unity 6 (`6000.4.10f1`), URP 17.4, Meta XR SDK All-in-One 201.0.0 (Meta XR Audio spatializer), `UnityEngine.Microphone`, `UnityEngine.AudioSource`, Unity Test Framework (EditMode/NUnit).
 
 ## Global Constraints
 
@@ -31,7 +31,7 @@
 **Created (Foundation — device, Play Mode / Quest verified):**
 - `Assets/Scripts/Foundation/Recording/IVoiceCaptureSource.cs` — capture seam + `VoiceCaptureResult` struct.
 - `Assets/Scripts/Foundation/Recording/VoiceRecorder.cs` — `Microphone` capture + offset detection + WAV encode (MonoBehaviour).
-- `Assets/Scripts/Foundation/Replay/VoicePlayer.cs` — spatialised, clock-driven playback (MonoBehaviour).
+- `Assets/Scripts/Foundation/Replay/VoicePlayer.cs` — spatialized, clock-driven playback (MonoBehaviour).
 
 **Modified:**
 - `Assets/Scripts/Domain/Model/Timeline.cs` — add `VoiceTrack voiceTrack`.
@@ -853,7 +853,7 @@ git commit -m "feat(voice): VoiceRecorder Microphone capture with measured start
 
 ---
 
-### Task 7: VoicePlayer (spatialised, clock-driven playback)
+### Task 7: VoicePlayer (spatialized, clock-driven playback)
 
 **Files:**
 - Create: `Assets/Scripts/Foundation/Replay/VoicePlayer.cs`
@@ -862,7 +862,7 @@ git commit -m "feat(voice): VoiceRecorder Microphone capture with measured start
 - Consumes: `VoiceTrack`, `WavCodec.TryDecode`, `VoiceSync.AudioPlayhead`.
 - Produces: `class VoicePlayer : MonoBehaviour` with `void Load(byte[] wavBytes, VoiceTrack track)`, `void Stop()`, `void Tick(float clock, bool playing, Vector3 headPosition)`.
 
-Device-verified (Meta XR Audio spatialiser + AudioSource). Its sync math is `VoiceSync` (Task 2), already tested.
+Device-verified (Meta XR Audio spatializer + AudioSource). Its sync math is `VoiceSync` (Task 2), already tested.
 
 - [ ] **Step 1: Write the implementation**
 
@@ -876,9 +876,9 @@ using UnityEngine;
 namespace Ankhora.Foundation.Replay
 {
     /// <summary>
-    /// Plays a recorded <see cref="VoiceTrack"/> spatialised from the ghost's head, locked to the replay
+    /// Plays a recorded <see cref="VoiceTrack"/> spatialized from the ghost's head, locked to the replay
     /// clock the <see cref="GhostHandPlayer"/> owns (never its own clock). The AudioSource uses the Meta XR
-    /// Audio spatialiser (set the project Spatializer Plugin to "Meta XR Audio"). Device-verified.
+    /// Audio spatializer (set the project Spatializer Plugin to "Meta XR Audio"). Device-verified.
     /// </summary>
     [RequireComponent(typeof(AudioSource))]
     public class VoicePlayer : MonoBehaviour
@@ -895,7 +895,7 @@ namespace Ankhora.Foundation.Replay
             _source = GetComponent<AudioSource>();
             _source.playOnAwake = false;
             _source.loop = false;
-            _source.spatialBlend = 1f;   // full 3D; the Meta XR Audio spatialiser does the rest
+            _source.spatialBlend = 1f;   // full 3D; the Meta XR Audio spatializer does the rest
         }
 
         /// <summary>Decode the WAV blob into a clip and arm playback. No-op if the track has no clip.</summary>
@@ -949,15 +949,15 @@ namespace Ankhora.Foundation.Replay
 }
 ```
 
-- [ ] **Step 2: Set the project spatialiser**
+- [ ] **Step 2: Set the project spatializer**
 
-Project Settings → Audio → **Spatializer Plugin = Meta XR Audio**. Confirm via `Unity_ReadConsole` that no audio-spatialiser errors appear on Play.
+Project Settings → Audio → **Spatializer Plugin = Meta XR Audio**. Confirm via `Unity_ReadConsole` that no audio-spatializer errors appear on Play.
 
 - [ ] **Step 3: Commit**
 
 ```bash
 git add Assets/Scripts/Foundation/Replay/VoicePlayer.cs
-git commit -m "feat(voice): VoicePlayer spatialised clock-driven playback"
+git commit -m "feat(voice): VoicePlayer spatialized clock-driven playback"
 ```
 
 ---
@@ -1100,7 +1100,7 @@ This task has no EditMode test — it is the end-to-end device verification the 
 Build & run (`Cmd+B`), then:
 - Record a take while narrating. Confirm the OS mic prompt appears on first run.
 - On replay, confirm: **voice is in sync** with the ghost hands; it **emanates from the ghost's head** and moves as the head moves; **loop** restarts cleanly; before the audio's first sample the source is silent (offset honoured).
-- `logcat -s Unity` shows the saved frame count and no audio/permission errors; the Meta spatialiser is active (no "no spatializer" warning).
+- `logcat -s Unity` shows the saved frame count and no audio/permission errors; the Meta spatializer is active (no "no spatializer" warning).
 - Deny mic permission once → the take records and replays hands-only with no error.
 
 - [ ] **Step 3: Commit**

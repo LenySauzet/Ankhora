@@ -7,10 +7,10 @@
 
 ## Context and problem
 
-The voice-capture+replay slice (PR #37) adds the Instructor's spatialised narration
+The voice-capture+replay slice (PR #37) adds the Instructor's spatialized narration
 alongside the ghost hands, replayed positioned in space and synced to the replay clock.
 The original design (spec `docs/superpowers/specs/2026-06-29-voice-capture-replay-design.md`)
-called for the **Meta XR Audio spatialiser (HRTF)** so the voice emanates convincingly from
+called for the **Meta XR Audio spatializer (HRTF)** so the voice emanates convincingly from
 the ghost's head in 3D.
 
 On device this produced **near-inaudible narration** even at half headset volume. Root cause,
@@ -18,7 +18,7 @@ confirmed iteratively on Quest 3:
 
 1. With `AudioSource.spatialize = true`, the Meta XR Audio plugin applies its own (heavy)
    distance attenuation and **overrides Unity's `rolloffMode`/`minDistance`** — so tuning the
-   Unity rolloff was a no-op while the spatialiser stayed quiet.
+   Unity rolloff was a no-op while the spatializer stayed quiet.
 2. The Quest microphone captures at a **low gain**, and *peak* normalisation barely lifts
    dynamic speech (peaks can already sit near full-scale while the average level is low).
 3. At masterclass range (instructor ~1–2 m, roughly where the learner is looking), the HRTF
@@ -53,7 +53,7 @@ normalisation** of the captured audio.
 
 The single most important reason: for a training tool, **intelligible, level-controllable
 narration beats subtle 3D localisation** — and Option 2 keeps the voice positioned at the ghost
-while removing the spatialiser's attenuation.
+while removing the spatializer's attenuation.
 
 Implementation (PR #37):
 
@@ -81,9 +81,9 @@ Implementation (PR #37):
     likely the headset speakers driven hard (our hard limiter can also contribute on transients).
   - The hard limiter is crude; a soft limiter would be gentler on peaks.
 - **Follow-ups (future investigation — not MVP-blocking):**
-  - **Re-investigate HRTF**: re-enable the Meta XR Audio spatialiser *with* proper gain
+  - **Re-investigate HRTF**: re-enable the Meta XR Audio spatializer *with* proper gain
     configuration (`MetaXRAudioSource` component / plugin attenuation settings) so we get both
-    optimal spatialisation **and** adequate loudness. This is the main open audio question.
+    optimal spatialization **and** adequate loudness. This is the main open audio question.
   - **Adaptive / per-user audio**: an in-experience volume control (and possibly per-environment
     presets) so the level adapts to different hearing needs and rooms — a settings-UI concern (V2).
   - **Soft limiting** (e.g. tanh soft-clip) to reduce any DSP-side saturation at high gain.
