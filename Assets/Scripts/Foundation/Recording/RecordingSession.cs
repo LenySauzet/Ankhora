@@ -1,3 +1,4 @@
+using System;
 using Ankhora.Domain.Model;
 using Ankhora.Domain.Recording;
 using Ankhora.Foundation.Persistence;
@@ -18,17 +19,20 @@ namespace Ankhora.Foundation.Recording
         private readonly IHandPoseSource _source;
         private readonly IHandSkeletonSource _skeletonSource;
         private readonly TimelineRecorder _recorder;
+        private readonly IVoiceCaptureSource _voice;
+        private bool _voiceCaptureStarted;
 
         private HandPose _left;   // reused buffers — the source reuses its bone arrays across frames
         private HandPose _right;
         private HandSkeleton _leftSkeleton;
         private HandSkeleton _rightSkeleton;
 
-        public RecordingSession(IHandPoseSource source, float sampleRateHz)
+        public RecordingSession(IHandPoseSource source, float sampleRateHz, IVoiceCaptureSource voice = null)
         {
             _source = source;
             _skeletonSource = source as IHandSkeletonSource;
             _recorder = new TimelineRecorder(sampleRateHz);
+            _voice = voice;
         }
 
         public bool IsRecording => _recorder.IsRecording;
@@ -38,6 +42,13 @@ namespace Ankhora.Foundation.Recording
             _leftSkeleton = null;
             _rightSkeleton = null;
             _recorder.Begin(now);
+            _voiceCaptureStarted = false;
+            if (_voice != null && _voice.IsAvailable)
+            {
+                // A voice-source failure must never sink the hands take — the core promise is hands-only fallback.
+                try { _voice.BeginCapture(now); _voiceCaptureStarted = true; }
+                catch (Exception e) { Debug.LogWarning($"[RecordingSession] Voice capture start failed, recording hands-only: {e.Message}"); }
+            }
         }
 
         /// <summary>Sample one frame: capture the skeleton if not yet captured, then push head + both hands.</summary>
@@ -69,8 +80,39 @@ namespace Ankhora.Foundation.Recording
             timeline.rightSkeleton = _rightSkeleton;
             frameCount = timeline.frames.Count;
 
+            // Build the chapter id once; the voice clip is addressed relative to it.
+            const string chapterId = "ch-1";
+            // Only finalize voice if capture actually started, and never let a voice failure abort the hands save.
+            try
+            {
+                if (_voiceCaptureStarted && _voice.TryEndCapture(now, out VoiceCaptureResult voiceResult) &&
+                    voiceResult.wavBytes != null && voiceResult.wavBytes.Length > 0)
+                {
+                    string clipRef = $"voice-{chapterId}.wav";
+                    if (store.WriteBlob(clipRef, voiceResult.wavBytes, out string blobError))
+                    {
+                        timeline.voiceTrack = new VoiceTrack
+                        {
+                            clipRef = clipRef,
+                            sampleRate = voiceResult.sampleRate,
+                            channels = voiceResult.channels,
+                            timelineOffsetSeconds = voiceResult.timelineOffsetSeconds,
+                            durationSeconds = voiceResult.durationSeconds
+                        };
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[RecordingSession] Voice blob write failed, saving hands-only: {blobError}");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[RecordingSession] Voice finalize failed, saving hands-only: {e.Message}");
+            }
+
             var masterclass = new Masterclass { id = "mc-local", title = "Local recording" };
-            masterclass.chapters.Add(new Chapter { id = "ch-1", timeline = timeline });
+            masterclass.chapters.Add(new Chapter { id = chapterId, timeline = timeline });
             return store.Save(masterclass, out error);
         }
 

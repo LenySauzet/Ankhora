@@ -28,5 +28,7 @@ namespace Ankhora.Domain.Model
         public HandSkeleton leftSkeleton;
 
         public HandSkeleton rightSkeleton;
+
+        public VoiceTrack voiceTrack;   // optional; null/!HasClip means a hands-only take
     }
 }
