@@ -25,13 +25,14 @@ namespace Ankhora.Foundation.Replay
             _source = GetComponent<AudioSource>();
             _source.playOnAwake = false;
             _source.loop = false;
-            _source.spatialBlend = 1f;   // full 3D; the Meta XR Audio spatialiser does the rest
+            _source.spatialBlend = 1f;     // full 3D distance/pan
+            _source.spatialize = true;     // route through the installed Meta XR Audio spatialiser (HRTF) — spatialBlend alone is only Unity's built-in pan
         }
 
         /// <summary>Decode the WAV blob into a clip and arm playback. No-op if the track has no clip.</summary>
         public void Load(byte[] wavBytes, VoiceTrack track)
         {
-            _loaded = false;
+            Unload();   // release any previously-decoded clip before creating a new one
             if (track == null || !track.HasClip) return;
             if (!WavCodec.TryDecode(wavBytes, out float[] samples, out int sampleRate, out int channels))
             {
@@ -49,6 +50,22 @@ namespace Ankhora.Foundation.Replay
         {
             if (_source != null && _source.isPlaying) _source.Stop();
         }
+
+        /// <summary>Stop playback and release the runtime-decoded clip. <see cref="AudioClip.Create"/> clips are
+        /// not collected with the hierarchy or owned by the <see cref="AudioSource"/>, so they must be freed
+        /// explicitly (same ownership rule as the ghost mesh) — on every re-load, on disarm, and on destroy.
+        /// Also clears <c>_loaded</c> so a stale clip can't resume on the next <see cref="Tick"/>.</summary>
+        public void Unload()
+        {
+            if (_source != null)
+            {
+                if (_source.isPlaying) _source.Stop();
+                if (_source.clip != null) { Destroy(_source.clip); _source.clip = null; }
+            }
+            _loaded = false;
+        }
+
+        private void OnDestroy() => Unload();
 
         /// <summary>Drive one frame from the owning player: position the source at the ghost head, keep the
         /// clip aligned to the clock, and play/pause with the replay. Called every frame, never self-clocked.</summary>

@@ -106,7 +106,7 @@ namespace Ankhora.Foundation.Replay
                 else
                 {
                     if (vt != null && vt.HasClip) Debug.LogWarning($"[GhostHandPlayer] Voice blob missing: {vErr}");
-                    _voicePlayer.Stop();
+                    _voicePlayer.Unload();   // release any prior take's clip so a hands-only/blobless replay stays silent
                 }
             }
 
