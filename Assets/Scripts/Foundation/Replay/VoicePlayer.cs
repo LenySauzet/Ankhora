@@ -6,9 +6,11 @@ using UnityEngine;
 namespace Ankhora.Foundation.Replay
 {
     /// <summary>
-    /// Plays a recorded <see cref="VoiceTrack"/> spatialised from the ghost's head, locked to the replay
-    /// clock the <see cref="GhostHandPlayer"/> owns (never its own clock). The AudioSource uses the Meta XR
-    /// Audio spatialiser (set the project Spatializer Plugin to "Meta XR Audio"). Device-verified.
+    /// Plays a recorded <see cref="VoiceTrack"/> positioned at the ghost's head, locked to the replay clock
+    /// the <see cref="GhostHandPlayer"/> owns (never its own clock). Uses Unity's constant-power stereo pan
+    /// (<c>spatialBlend = 1</c>), not the Meta XR Audio HRTF — see ADR-0006 (audible-first: the HRTF
+    /// attenuated narration to near-inaudible for no perceptible localisation gain at masterclass range).
+    /// Device-verified on Quest 3.
     /// </summary>
     [RequireComponent(typeof(AudioSource))]
     public class VoicePlayer : MonoBehaviour
